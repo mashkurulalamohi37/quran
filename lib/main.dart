@@ -1,422 +1,223 @@
-import 'package:firebase_database/firebase_database.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:fluttertoast/fluttertoast.dart';
-import 'package:quran/pages/hadislist.dart';
+import 'package:provider/provider.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:quran/pages/home_dashboard.dart';
 import 'package:quran/pages/suralist.dart';
-import 'package:device_info/device_info.dart';
-import 'package:url_launcher/url_launcher.dart';
-import 'package:launch_review/launch_review.dart';
-import 'package:connectivity/connectivity.dart';
+import 'package:quran/pages/hadislist.dart';
+import 'package:quran/pages/utilities.dart';
+import 'package:quran/pages/settings_screen.dart';
+import 'package:quran/services/audio_service.dart';
+import 'package:quran/services/notification_service.dart';
+import 'package:quran/services/settings_service.dart';
+import 'package:quran/services/bookmark_service.dart';
+import 'package:quran/services/sound_service.dart';
+import 'package:quran/theme/app_theme.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  final settings = SettingsService();
+  final bookmarks = BookmarkService();
+  await settings.load();
+  await bookmarks.load();
+  await NotificationService.initialize();
+  await settings.updatePrayerNotifications();
 
-void main() {
-  runApp(MaterialApp(
-    title: 'Bangla Quran',
-    home: BanglaQuran(),
-    debugShowCheckedModeBanner: false,
-  ));
+  runApp(
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider.value(value: settings),
+        ChangeNotifierProvider.value(value: bookmarks),
+        ChangeNotifierProvider(create: (_) => AudioService()),
+      ],
+      child: const BanglaQuranApp(),
+    ),
+  );
 }
 
-class BanglaQuran extends StatefulWidget {
-  BanglaQuranState createState() => BanglaQuranState();
+class DismissKeyboardNavigationObserver extends NavigatorObserver {
+  @override
+  void didStartUserGesture(Route<dynamic> route, Route<dynamic>? previousRoute) {
+    FocusManager.instance.primaryFocus?.unfocus();
+    super.didStartUserGesture(route, previousRoute);
+  }
+
+  @override
+  void didPop(Route<dynamic> route, Route<dynamic>? previousRoute) {
+    FocusManager.instance.primaryFocus?.unfocus();
+    super.didPop(route, previousRoute);
+  }
 }
 
-class BanglaQuranState extends State<BanglaQuran> {
-  var formKey = GlobalKey<FormState>();
-  var usrName = TextEditingController();
-  var usrEmail = TextEditingController();
-  var usrComments = TextEditingController();
-  var name, email, comments;
+class BanglaQuranApp extends StatelessWidget {
+  const BanglaQuranApp({super.key});
 
-  DeviceInfoPlugin deviceInfo = DeviceInfoPlugin();
+  @override
+  Widget build(BuildContext context) {
+    return Consumer<SettingsService>(
+      builder: (context, settings, _) {
+        return MaterialApp(
+          title: 'বাংলা কুরআন',
+          debugShowCheckedModeBanner: false,
+          theme: AppTheme.light,
+          darkTheme: AppTheme.dark,
+          themeMode: settings.themeMode,
+          home: const HomeScreen(),
+          navigatorObservers: [DismissKeyboardNavigationObserver()],
+        );
+      },
+    );
+  }
+}
 
+// ─── Home Navigation Shell ───────────────────────────────────────────────────
+
+class HomeScreen extends StatefulWidget {
+  const HomeScreen({super.key});
+  @override
+  HomeScreenState createState() => HomeScreenState();
+}
+
+class HomeScreenState extends State<HomeScreen> {
+  int _currentIndex = 0;
+  late SoundService _soundService;
 
   @override
   void initState() {
     super.initState();
-  }
-
-
-  DateTime createTime = DateTime.now();
-
-  deviceInformation() async {
-    AndroidDeviceInfo androidInfo = await deviceInfo.androidInfo;
-    DatabaseReference reference = FirebaseDatabase.instance.reference();
-    var data = {
-      "model": '${androidInfo.model}',
-      "androidId": '${androidInfo.androidId}',
-      "manufacturer": '${androidInfo.manufacturer}',
-      "id": '${androidInfo.id}',
-      "board": '${androidInfo.board}',
-      "bootloader": '${androidInfo.bootloader}',
-      "brand": '${androidInfo.brand}',
-      "version_release": '${androidInfo.version.release}',
-      "version_baseOS": '${androidInfo.version.baseOS}',
-      "version_codename": '${androidInfo.version.codename}',
-      "device": '${androidInfo.device}',
-      "display": '${androidInfo.display}',
-      "fingerprint": '${androidInfo.fingerprint}',
-      "host": '${androidInfo.host}',
-      "hashCode": '${androidInfo.hashCode}',
-      'created_at': '${createTime}'
-    };
-    var db = FirebaseDatabase.instance.reference().child(
-        "user_device_information")
-        .child('${androidInfo.androidId}')
-        .reference();
-    db.once().then((DataSnapshot snapshot) {
-      Map<dynamic, dynamic> values = snapshot.value;
-      if (values == null) {
-        reference.child('user_device_information').child(
-            '${androidInfo.androidId}').set(data);
-      }
+    _soundService = SoundService();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _soundService.startMonitoring(context.read<SettingsService>());
+      _requestPermissionsOnFirstLaunch();
     });
   }
 
-  void hanfleSubmit() async {
-    AndroidDeviceInfo androidInfo = await deviceInfo.androidInfo;
-    if (formKey.currentState.validate()) {
-      formKey.currentState.save();
-      if (name != null && email != null) {
-        DatabaseReference reference = FirebaseDatabase.instance.reference();
-        var data = {
-          "name": name,
-          "email": email,
-          "comments": comments,
-          'created_at': '${createTime}'
-        };
+  Future<void> _requestPermissionsOnFirstLaunch() async {
+    final prefs = await SharedPreferences.getInstance();
+    final hasAskedPermissions = prefs.getBool('_hasAskedPermissions') ?? false;
+    if (hasAskedPermissions) return;
+    await prefs.setBool('_hasAskedPermissions', true);
 
-        var db = FirebaseDatabase.instance.reference().child("feedback").child(
-            '${androidInfo.androidId}').reference();
-        db.once().then((DataSnapshot snapshot) {
-          Map<dynamic, dynamic> values = snapshot.value;
-          if (values == null) {
-            reference.child('feedback').child('${androidInfo.androidId}').set(
-                data).then((onValue) {
-              hanfleReset();
-              showToast("Thank you for your valueable feedback");
-            });
-          } else {
-            hanfleReset();
-            showToast('Thank you. You have already done');
-          }
-        });
-      }
-    }
+    // Request notification permission
+    await Permission.notification.request();
+    // Request location permission
+    await Permission.locationWhenInUse.request();
   }
 
-  void hanfleReset() {
-    Navigator.of(context).pop();
-    usrName.clear();
-    usrEmail.clear();
-    usrComments.clear();
+  @override
+  void dispose() {
+    _soundService.stopMonitoring();
+    super.dispose();
   }
 
-  showToast(txt) {
-    Fluttertoast.showToast(
-        msg: txt,
-        toastLength: Toast.LENGTH_LONG,
-        gravity: ToastGravity.TOP,
-        timeInSecForIos: 1,
-        backgroundColor: Colors.blue,
-        textColor: Colors.white,
-        fontSize: 16.0);
-  }
+  final List<Widget> _tabs = [
+    const HomeDashboard(),
+    const SuraList(),
+    const HadisList(),
+    const UtilitiesScreen(),
+    const SettingsScreen(),
+  ];
 
-  String validateEmail(String value) {
-    if (value.length == 0) {
-      return ("Email is required");
-    } else {
-      Pattern pattern =
-          r'^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$';
-      RegExp regex = new RegExp(pattern);
-      if (!regex.hasMatch(value))
-        return 'Enter Valid Email';
-      else
-        return null;
-    }
-  }
 
-  review() {
-    LaunchReview.launch();
-  }
-
-  void didChangeAppLifecycleState(AppLifecycleState state) {
-    setState(() {});
-  }
-
-  showRateDialog() {
-    return showDialog(
-        context: context,
-        builder: (BuildContext context) {
-          return AlertDialog(
-            title: Text("Rate 5 Start for Holy Quran"),
-            content: Text("Please rate now"),
-            actions: <Widget>[
-          RaisedButton(
-          color: Colors.deepOrange,
-            onPressed: () {
-            SystemNavigator.pop();
-            },
-            child: Text('Later', style: TextStyle(color: Colors.white),),
+  Future<bool> _showExitDialog() async {
+    return await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Text("অ্যাপ বন্ধ করুন? 🚪", style: GoogleFonts.poppins(fontWeight: FontWeight.w600, fontSize: 16)),
+        content: Text("আপনি কি অ্যাপ থেকে বের হতে চান?", style: GoogleFonts.poppins(fontSize: 13)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: Text("না", style: GoogleFonts.poppins(color: Colors.grey, fontWeight: FontWeight.w600)),
           ),
-          RaisedButton(
-            color: Colors.teal,
-            onPressed: () {
-              this.review();
-            },
-            child: Text('Rate Now', style: TextStyle(color: Colors.white),),
-          )
-          ]
-          ,
-          );
-        }
-    );
-  }
-
-  _showDialog() {
-    return showDialog(
-        context: context,
-        builder: (BuildContext context) {
-          return AlertDialog(
-            content: SingleChildScrollView(
-              child: ListBody(
-                children: <Widget>[
-                  Text("Feedback"),
-                  Form(
-                    key: formKey,
-                    child: Column(
-                      children: <Widget>[
-                        TextFormField(
-                          controller: usrName,
-                          decoration: InputDecoration(labelText: "Your name"),
-                          validator: (value) {
-                            if (value.length == 0) return ("Name is required");
-                          },
-                          onSaved: (value) {
-                            this.name = value;
-                          },
-                        ),
-                        TextFormField(
-                          controller: usrEmail,
-                          decoration:
-                          InputDecoration(labelText: "Your email address"),
-                          validator: validateEmail,
-                          keyboardType: TextInputType.emailAddress,
-                          onSaved: (value) {
-                            this.email = value;
-                          },
-                        ),
-                        TextField(
-                          controller: usrComments,
-                          decoration:
-                          InputDecoration(labelText: "Your Comments"),
-                          minLines: 1,
-                          maxLines: null,
-                          keyboardType: TextInputType.multiline,
-                          onChanged: (value) {
-                            this.comments = value;
-                          },
-                        ),
-                        SizedBox(
-                          height: 15,
-                        ),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.end,
-                          children: <Widget>[
-                            FlatButton(
-                              padding: EdgeInsets.all(0),
-                              color: Colors.deepOrange,
-                              textColor: Colors.white,
-                              child: Text("Cancel"),
-                              onPressed: () {
-                                hanfleReset();
-                              },
-                            ),
-                            SizedBox(
-                              width: 10,
-                            ),
-                            FlatButton(
-                              padding: EdgeInsets.all(0),
-                              color: Colors.teal,
-                              textColor: Colors.white,
-                              child: Text("Submit"),
-                              onPressed: () {
-                                // hanfleSubmit();
-
-                                // showToast();
-                              },
-                            )
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            actions: <Widget>[],
-          );
-        });
-  }
-
-  _launchURL() async {
-    const url = 'https://sites.google.com/view/banglaquran/home';
-    if (await canLaunch(url)) {
-      await launch(url);
-    } else {
-      throw 'Could not launch $url';
-    }
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.emerald),
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: Text("হ্যাঁ, বের হই", style: GoogleFonts.poppins(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 13)),
+          ),
+        ],
+      ),
+    ) ?? false;
   }
 
   @override
   Widget build(BuildContext context) {
-    return WillPopScope(
-        onWillPop: () async {
-          this.showRateDialog();
-          var connectivityResult = await (Connectivity().checkConnectivity());
-          if (connectivityResult == ConnectivityResult.mobile) {
-            this.deviceInformation();
-          } else if (connectivityResult == ConnectivityResult.wifi) {
-            this.deviceInformation();
-          }
-        },
-        child: Scaffold(
-            backgroundColor: Colors.cyan,
-            appBar: PreferredSize(
-              preferredSize: Size.fromHeight(40.0),
-              child: AppBar(
-                title: Text("বাংলা কুরআন"),
-                centerTitle: true,
-                backgroundColor: Colors.teal,
-                iconTheme: IconThemeData(color: Colors.tealAccent),
-                actions: <Widget>[
-                  Theme(
-                    data: Theme.of(context).copyWith(
-                        cardColor: Colors.teal,
-                        buttonColor: Colors.white
-                    ),
-                    child: InkWell(
-                      onTap: () {},
-                      child: PopupMenuButton(
-                        icon: Icon(
-                          Icons.menu,
-                          color: Colors.white,
-                        ),
-                        offset: Offset(0, 40),
-                        elevation: 10,
-                        onSelected: (value) {
-                          if (value == 'Feedback') {
-                            _showDialog();
-                          } else if (value == 'privacy') {
-                            _launchURL();
-                          } else if (value == 'Rate_App') {
-                            review();
-                          }
-                          print(value);
-                        },
-                        itemBuilder: (BuildContext context) {
-                          return [
-                            PopupMenuItem(
-                              value: "privacy",
-                              child: Text("Privacy policy",
-                                style: TextStyle(color: Colors.white),),
-                            ),
-                            PopupMenuItem(
-                              value: "Feedback",
-                              child: Text("Feedback",
-                                style: TextStyle(color: Colors.white),),
-                            ),
-                            PopupMenuItem(
-                              value: "Rate_App",
-                              child: Text("Rate App",
-                                style: TextStyle(color: Colors.white),),
-                            ),
-                          ];
-                        },
-                      ),
-                    ),
-                  ),
-                  /*IconButton(
-                color: Colors.white,
-                icon: Icon(
-                  Icons.feedback,
-                  size: 15,
-                ),
-                onPressed: () {
-                  _showDialog();
-                },
-              ),*/
-                ],
+    final settings = context.watch<SettingsService>();
+    final isDark = settings.isDarkMode;
+
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) async {
+        if (didPop) return;
+        final shouldExit = await _showExitDialog();
+        if (shouldExit && mounted) {
+          Navigator.of(context).pop();
+        }
+      },
+      child: Scaffold(
+        body: IndexedStack(
+          index: _currentIndex,
+          children: _tabs,
+        ),
+        bottomNavigationBar: NavigationBarTheme(
+          data: NavigationBarThemeData(
+            indicatorColor: AppColors.emerald.withValues(alpha: 0.12),
+            labelTextStyle: WidgetStateProperty.resolveWith((states) {
+              if (states.contains(WidgetState.selected)) {
+                return GoogleFonts.poppins(
+                  fontSize: 11,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.emerald,
+                );
+              }
+              return GoogleFonts.poppins(
+                fontSize: 10,
+                color: isDark ? Colors.white54 : Colors.black54,
+              );
+            }),
+          ),
+          child: NavigationBar(
+            selectedIndex: _currentIndex,
+            onDestinationSelected: (index) {
+              setState(() {
+                _currentIndex = index;
+              });
+            },
+            backgroundColor: isDark ? AppColors.cardDark : Colors.white,
+            height: 65,
+            labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
+            destinations: [
+              NavigationDestination(
+                icon: Icon(Icons.home_outlined, color: isDark ? Colors.white70 : Colors.black87),
+                selectedIcon: const Icon(Icons.home_rounded, color: AppColors.emerald),
+                label: "হোম",
               ),
-            ),
-            body:
-            Container(
-              decoration: new BoxDecoration(
-                image: new DecorationImage(
-                  image: new AssetImage("assets/images/bgImg.png"),
-                  fit: BoxFit.cover,
-                ),
+              NavigationDestination(
+                icon: Icon(Icons.menu_book_outlined, color: isDark ? Colors.white70 : Colors.black87),
+                selectedIcon: const Icon(Icons.menu_book_rounded, color: AppColors.emerald),
+                label: "কুরআন",
               ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: <Widget>[
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: <Widget>[
-                      Card(
-                        borderOnForeground: true,
-                        color: Colors.teal,
-                        child: InkWell(
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (context) => SuraList()),
-                            );
-                          },
-                          child: Stack(
-                            children: <Widget>[
-                              Image.asset(
-                                "assets/images/qlauncher.png",
-                                height: 100,
-                                width: 100,
-                              ),
-                            ],
-                          ),
-                        ),
-                        elevation: 15,
-                        margin: EdgeInsets.all(5),
-                      ),
-                      Card(
-                        borderOnForeground: true,
-                        color: Colors.teal,
-                        child: InkWell(
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (context) => HadisList()),
-                            );
-                          },
-                          child: Stack(
-                            children: <Widget>[
-                              Image.asset("assets/images/hadith.png"),
-                            ],
-                          ),
-                        ),
-                        elevation: 15,
-                        margin: EdgeInsets.all(5),
-                      ),
-                    ],
-                  )
-                ],
+              NavigationDestination(
+                icon: Icon(Icons.format_quote_outlined, color: isDark ? Colors.white70 : Colors.black87),
+                selectedIcon: const Icon(Icons.format_quote_rounded, color: AppColors.emerald),
+                label: "হাদিস",
               ),
-            ))
+              NavigationDestination(
+                icon: Icon(Icons.dashboard_outlined, color: isDark ? Colors.white70 : Colors.black87),
+                selectedIcon: const Icon(Icons.dashboard_rounded, color: AppColors.emerald),
+                label: "অন্যান্য",
+              ),
+              NavigationDestination(
+                icon: Icon(Icons.settings_outlined, color: isDark ? Colors.white70 : Colors.black87),
+                selectedIcon: const Icon(Icons.settings_rounded, color: AppColors.emerald),
+                label: "সেটিংস",
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

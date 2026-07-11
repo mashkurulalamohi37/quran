@@ -1,231 +1,321 @@
 import 'dart:convert';
-import 'package:draggable_scrollbar/draggable_scrollbar.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
 import 'package:quran/pages/ayalistbysura.dart';
+import 'package:quran/services/settings_service.dart';
+import 'package:quran/theme/app_theme.dart';
 
 class SuraList extends StatefulWidget {
+  const SuraList({super.key});
+  @override
   SuraListState createState() => SuraListState();
 }
 
 class SuraListState extends State<SuraList> {
-  final suraBgc = const Color(0xFFbadc57);
-
-  TabController controller;
+  List<dynamic> _allSurahs = [];
+  List<dynamic> _filtered = [];
+  final TextEditingController _searchCtrl = TextEditingController();
+  final _scrollController = ScrollController();
 
   @override
   void initState() {
     super.initState();
-    controller = new TabController(vsync: null, length: 1, initialIndex: 0);
+    _loadData();
+    _searchCtrl.addListener(_onSearch);
+  }
+
+  @override
+  void dispose() {
+    _searchCtrl.dispose();
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _loadData() async {
+    final jsonString = await rootBundle.loadString('assets/sura_list.json');
+    final list = json.decode(jsonString) as List;
+    setState(() {
+      _allSurahs = list;
+      _filtered = list;
+    });
+  }
+
+  void _onSearch() {
+    final q = _searchCtrl.text.trim().toLowerCase();
+    setState(() {
+      if (q.isEmpty) {
+        _filtered = _allSurahs;
+      } else {
+        _filtered = _allSurahs.where((s) {
+          return s['bangla_name'].toString().toLowerCase().contains(q) ||
+              s['transliteration_en'].toString().toLowerCase().contains(q) ||
+              s['translation_en'].toString().toLowerCase().contains(q) ||
+              s['number'].toString().contains(q);
+        }).toList();
+      }
+    });
   }
 
   @override
   Widget build(BuildContext context) {
+    final isDark = context.watch<SettingsService>().isDarkMode;
     return Scaffold(
-      appBar:
-      PreferredSize(
-          preferredSize: Size.fromHeight(40.0),
-          child: AppBar(
-            backgroundColor: Color(0xFF009484),
-            iconTheme: IconThemeData(color: Colors.white),
-            title: Text(
-              "সূরাসমূহ",
-              textAlign: TextAlign.right,
+      appBar: AppBar(
+        title: const Text("সূরাসমূহ"),
+        actions: [
+          IconButton(
+            icon: Icon(
+              isDark ? Icons.light_mode_rounded : Icons.dark_mode_rounded,
+              color: Colors.white70,
             ),
-            centerTitle: true,
-          )),
-      body: TabBarView(
-        controller: controller,
-        children: <Widget>[
-          SuraItem(),
+            onPressed: context.read<SettingsService>().toggleDarkMode,
+          ),
+        ],
+      ),
+      body: Column(
+        children: [
+          // ── Search bar ──
+          Container(
+            color: isDark ? AppColors.emeraldDark : AppColors.emerald,
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+            child: TextField(
+              controller: _searchCtrl,
+              style: GoogleFonts.poppins(color: Colors.white),
+              decoration: InputDecoration(
+                hintText: "সূরা খুঁজুন...",
+                hintStyle: GoogleFonts.poppins(color: Colors.white54),
+                prefixIcon: const Icon(Icons.search, color: Colors.white54),
+                suffixIcon: _searchCtrl.text.isNotEmpty
+                    ? IconButton(
+                        icon: const Icon(Icons.clear, color: Colors.white54),
+                        onPressed: () => _searchCtrl.clear(),
+                      )
+                    : null,
+                filled: true,
+                fillColor: Colors.white12,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(14),
+                  borderSide: BorderSide.none,
+                ),
+                contentPadding: const EdgeInsets.symmetric(vertical: 0),
+              ),
+            ),
+          ),
+
+          // ── Count strip ──
+          Container(
+            color: isDark ? AppColors.cardDark : const Color(0xFFF0F7F0),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: Row(
+              children: [
+                const Icon(Icons.library_books_rounded, size: 16, color: AppColors.emerald),
+                const SizedBox(width: 6),
+                Text(
+                  _searchCtrl.text.isEmpty
+                      ? "মোট ${_allSurahs.length} টি সূরা"
+                      : "${_filtered.length} টি ফলাফল",
+                  style: GoogleFonts.poppins(
+                    fontSize: 12,
+                    color: isDark ? AppColors.textSecondaryDark : AppColors.emerald,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          // ── Surah List ──
+          Expanded(
+            child: _filtered.isEmpty
+                ? Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.search_off_rounded,
+                            size: 64, color: Colors.grey),
+                        const SizedBox(height: 12),
+                        Text("কোনো ফলাফল পাওয়া যায়নি",
+                            style: GoogleFonts.poppins(color: Colors.grey)),
+                      ],
+                    ),
+                  )
+                : Scrollbar(
+                    controller: _scrollController,
+                    thumbVisibility: true,
+                    interactive: true,
+                    thickness: 8,
+                    radius: const Radius.circular(8),
+                    child: ListView.builder(
+                      controller: _scrollController,
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      itemCount: _filtered.length,
+                      itemBuilder: (ctx, i) => _SurahCard(
+                        surah: _filtered[i],
+                        isDark: isDark,
+                      ),
+                    ),
+                  ),
+          ),
         ],
       ),
     );
   }
 }
 
-class SuraItem extends StatefulWidget {
-  SuraItemState createState() => SuraItemState();
-}
+// ─── Surah Card ───────────────────────────────────────────────────────────────
 
-class SuraItemState extends State<SuraItem> {
-  var suraBgc = const Color(0xFFA2D0C9);
-  var suraBgc23 = const Color(0xFF2ecc72);
-  var suraBgc2 = const Color(0xFF50A9B7);
-  var suraBgc3;
-
-  List QranListData = [];
-  List AllSuraList = [];
-  String imgUrl;
-
-  loadQranListData() async {
-    var jsonString = await rootBundle.loadString('assets/sura_list.json');
-    setState(() {
-      this.QranListData = json.decode(jsonString);
-    });
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    loadQranListData();
-  }
-
-  String _setImage(String imgtext) {
-    if (imgtext == "Meccan") {
-      this.imgUrl = "assets/images/makka.png";
-    } else {
-      this.imgUrl = "assets/images/madina.png";
-    }
-    return this.imgUrl;
-  }
-
-  int _selectedIndex = null;
-
-  _onSelected(int index) {
-    setState(() {
-      _selectedIndex = index;
-      suraBgc3 = const Color(0xFF009484);
-    });
-  }
+class _SurahCard extends StatelessWidget {
+  final dynamic surah;
+  final bool isDark;
+  const _SurahCard({required this.surah, required this.isDark});
 
   @override
   Widget build(BuildContext context) {
-    ScrollController _arrowsController = ScrollController();
-    return Scaffold(
-      body: Center(
-        child: Container(
-          child: DraggableScrollbar.arrows(
-            // labelTextBuilder: (double offset) => Text("${i}"),
-            controller: _arrowsController,
-            scrollbarAnimationDuration: Duration(seconds: 1),
-            scrollbarTimeToFade: Duration(seconds: 1),
-            backgroundColor: Colors.teal,
-            child: ListView.builder(
-              controller: _arrowsController,
-              itemBuilder: (context, i) {
-                return GestureDetector(
-                    onTapDown: (val) {
-                      _onSelected(i);
-                    },
-                    onTapUp: (val) {
-                      setState(() {
-                        _selectedIndex = null;
-                      });
-                    },
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (context) =>
-                                AyaListBySura(QranListData[i])),
-                      );
-                    },
-                    child: Card(
-                      child: Container(
-                          color: _selectedIndex != null && _selectedIndex == i
-                              ? suraBgc3
-                              : Colors.white,
-                          child: Column(
-                            children: <Widget>[
-                              Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: <Widget>[
-                                  Padding(
-                                    padding: const EdgeInsets.all(8.0),
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.start,
-                                      children: <Widget>[
-                                        Text("${QranListData[i]["number"]}",
-                                            style: TextStyle(
-                                              fontSize: 17,
-                                              color: _selectedIndex != null &&
-                                                      _selectedIndex == i
-                                                  ? Colors.white
-                                                  : Colors.black,
-                                            )),
-                                        Text(
-                                          "সূরা " +
-                                              QranListData[i]["bangla_name"] +
-                                              ""
-                                              "(${QranListData[i]['total_verses_b']})",
-                                          style: TextStyle(
-                                            fontSize: 17,
-                                            color: _selectedIndex != null &&
-                                                    _selectedIndex == i
-                                                ? Colors.white
-                                                : Colors.black,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                  Column(
-                                    crossAxisAlignment: CrossAxisAlignment.end,
-                                    children: <Widget>[
-                                      Padding(
-                                        padding: EdgeInsets.symmetric(
-                                            horizontal: 5, vertical: 0),
-                                        child: Text(QranListData[i]["name"],
-                                            style: TextStyle(
-                                                fontSize: 17,
-                                                color: _selectedIndex != null &&
-                                                        _selectedIndex == i
-                                                    ? Colors.white
-                                                    : Colors.black,
-                                                fontWeight: FontWeight.bold)),
-                                      ),
-                                      Padding(
-                                        padding: EdgeInsets.symmetric(
-                                            horizontal: 5, vertical: 0),
-                                        child: Image.asset(
-                                          _setImage(QranListData[i]
-                                              ["revelation_type"]),
-                                          height: 20,
-                                          width: 20,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ],
-                              ),
-                              Divider(
-                                height: 2.0,
-                                color: Colors.teal,
-                              )
-                            ],
-                          )),
-                    ));
-              },
-              itemCount: QranListData.length,
+    final isMeccan = surah['revelation_type'] == 'Meccan';
+
+    return GestureDetector(
+      onTap: () => Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => AyaListBySura(surah)),
+      ),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 10),
+        decoration: BoxDecoration(
+          color: isDark ? AppColors.cardDark : AppColors.cardLight,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: isDark ? 0.25 : 0.06),
+              blurRadius: 8,
+              offset: const Offset(0, 3),
             ),
+          ],
+        ),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          child: Row(
+            children: [
+              // ── Number badge ──
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFFF9A825), Color(0xFFF57F17)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.gold.withValues(alpha: 0.35),
+                      blurRadius: 8,
+                      offset: const Offset(0, 3),
+                    ),
+                  ],
+                ),
+                child: Center(
+                  child: Text(
+                    surah['number'] ?? '${surah['id']}',
+                    style: GoogleFonts.poppins(
+                      color: Colors.white,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 14),
+
+              // ── Bangla name + verse count ──
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      "সূরা ${surah['bangla_name']}",
+                      style: GoogleFonts.poppins(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                        color: isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Row(
+                      children: [
+                        Text(
+                          surah['transliteration_en'] ?? '',
+                          style: GoogleFonts.poppins(
+                            fontSize: 11,
+                            color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight,
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        Text("•",
+                            style: TextStyle(
+                                color: isDark
+                                    ? AppColors.textSecondaryDark
+                                    : AppColors.textSecondaryLight)),
+                        const SizedBox(width: 6),
+                        Text(
+                          "${surah['total_verses_b']} আয়াত",
+                          style: GoogleFonts.poppins(
+                            fontSize: 11,
+                            color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+
+              // ── Right side: Arabic + chip ──
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    surah['name'] ?? '',
+                    style: const TextStyle(
+                      fontFamily: 'Lateef',
+                      fontSize: 22,
+                      color: AppColors.emeraldLight,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: isMeccan
+                          ? AppColors.makkiColor.withValues(alpha: 0.15)
+                          : AppColors.madinaBg.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: isMeccan
+                            ? AppColors.makkiColor.withValues(alpha: 0.4)
+                            : AppColors.madinaBg.withValues(alpha: 0.3),
+                        width: 1,
+                      ),
+                    ),
+                    child: Text(
+                      isMeccan ? "মক্কী" : "মাদানী",
+                      style: GoogleFonts.poppins(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w600,
+                        color: isMeccan ? AppColors.makkiColor : AppColors.madinaBg,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ),
         ),
       ),
     );
   }
 }
-
-/*
-
-Widget bacS() {
-  return ListView.builder(
-      itemCount: _listViewData.length,
-      itemBuilder: (context, index)
-  =>
-      Container(
-        color: _selectedIndex != null && _selectedIndex == index
-            ? Colors.red
-            : Colors.white,
-        child: ListTile(
-          title: Text(_listViewData[index]),
-          onTap: () => _onSelected(index),
-        ),
-      )
-  ,
-}*/

@@ -14,33 +14,46 @@ description: Bangla Quran contains two translation. English and Bangla with main
 version: 1.0.0+1
 
 environment:
-  sdk: ">=2.1.0 <3.0.0"
+  sdk: ">=3.3.0 <4.0.0"
 
 dependencies:
   flutter:
     sdk: flutter
-  fluttertoast: 3.0.4
-  share: ^0.6.1+1
-  draggable_scrollbar: ^0.0.4
-  firebase_core: ^0.4.0+1
-  firebase_database: ^3.0.0
-  device_info: ^0.4.0+1
-  url_launcher: ^5.0.2
-  launch_review: ^2.0.0
-  connectivity: ^0.4.3+1
-  # The following adds the Cupertino Icons font to your application.
-  # Use with the CupertinoIcons class for iOS style icons.
-  cupertino_icons: ^0.1.2
+  cupertino_icons: ^1.0.8
+  fluttertoast: ^8.2.8
+  share_plus: ^10.0.0
+  draggable_scrollbar: ^0.1.0
+  device_info_plus: ^10.1.0
+  url_launcher: ^6.3.0
+  in_app_review: ^2.0.9
+  connectivity_plus: ^6.0.3
+  shared_preferences: ^2.3.1
+  google_fonts: ^6.2.1
+  provider: ^6.1.2
+  just_audio: ^0.9.36
+  adhan: ^2.0.0
+  geolocator: ^13.0.1
+  flutter_local_notifications: ^18.0.0
+  permission_handler: ^11.3.1
+  flutter_timezone: ^3.0.0
+  flutter_compass: ^0.8.1
+  hijri: ^3.0.1
+  home_widget: ^0.7.0
+  pdf: ^3.10.8
+  printing: ^5.11.1
+  bangla_pdf: ^1.0.6
 
-flutter_icons:
+flutter_launcher_icons:
   image_path: "assets/images/qlauncher.png"
   android: true
   ios: true
+  min_sdk_android: 21
 
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
+  flutter_launcher_icons: ^0.13.1
 
 
 # For information on the generic Dart part of this file, see the
@@ -196,6 +209,9 @@ flutter:
        fonts:
          - asset: assets/fonts/LateefRegOT.ttf
            weight: 500
+     - family:  Amiri
+       fonts:
+         - asset: assets/fonts/Amiri-Regular.ttf
 
   #
   # For details regarding fonts from package dependencies,

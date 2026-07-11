@@ -1,390 +1,437 @@
 import 'dart:convert';
-
-import 'package:draggable_scrollbar/draggable_scrollbar.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:fluttertoast/fluttertoast.dart';
-import 'package:share/share.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
+import 'package:share_plus/share_plus.dart';
+import 'package:quran/services/settings_service.dart';
+import 'package:quran/theme/app_theme.dart';
 
 class HadisList extends StatefulWidget {
-  var suraInfo;
-
-  HadisList();
-
+  const HadisList({super.key});
+  @override
   HadisListState createState() => HadisListState();
 }
 
 class HadisListState extends State<HadisList> {
-  var suranInfo;
+  List<dynamic> _hadisData = [];
+  static const int _totalHadis = 42;
+  bool _showArabic = true;
+  bool _showBangla = true;
+  final _searchCtrl = TextEditingController();
+  final _scrollController = ScrollController();
+  String _searchQuery = "";
 
-  HadisListState();
-
-  TabController controller;
-  List AllSuraListArabic = [];
-  List AllSuraListbengali = [];
-  var ayaCount = 0;
-  var ayaNumberBn;
-  var shareText;
-  var onlyArabic = true;
-  var onlyBangla = true;
-  var arBng = true;
-  var onlyBng = false;
-  var onlyAr = false;
-  final snackBarkey = new GlobalKey<ScaffoldState>();
-
-  loadAllSuraListData() async {
-    var jsonString = await rootBundle.loadString("assets/40hadis/40.json");
-    setState(() {
-      this.AllSuraListArabic = json.decode(jsonString);
-      this.ayaCount = 42;
+  @override
+  void initState() {
+    super.initState();
+    _loadData();
+    _searchCtrl.addListener(() {
+      setState(() {
+        _searchQuery = _searchCtrl.text.trim().toLowerCase();
+      });
     });
   }
 
   @override
-  void initState() {
-    loadAllSuraListData();
-    super.initState();
-    controller = new TabController(vsync: null, length: 1, initialIndex: 0);
+  void dispose() {
+    _searchCtrl.dispose();
+    _scrollController.dispose();
+    super.dispose();
   }
 
-  getBismillah(i, j) {
-    if (i != null && i == 0) {
-      return j;
-    } else {
-      return "";
-    }
+  Future<void> _loadData() async {
+    final raw = await rootBundle.loadString("assets/40hadis/40.json");
+    setState(() {
+      _hadisData = json.decode(raw) as List;
+    });
   }
 
-  getHadisErMan(i) {
-    if (i != null && i == 30) {
-      return "হাদিসের মানঃ নির্নিত নয়";
-    } else {
-      return "হাদিসের মানঃ সহিহ হাদিস";
-    }
+  String _getArabic(int i) {
+    if (_hadisData.isEmpty) return '';
+    return (_hadisData[0]['verse']['verse_$i'] as String?) ?? '';
   }
 
-  showToast() {
+  String _getBangla(int i) {
+    if (_hadisData.isEmpty) return '';
+    return (_hadisData[0]['verse_bn']['verse_$i'] as String?) ?? '';
+  }
+
+  bool _isSahih(int i) => i != 30;
+
+  void _showToast(String msg) {
     Fluttertoast.showToast(
-        msg: "হাদিস টি কপি সম্পন্ন হয়েছে",
-        toastLength: Toast.LENGTH_LONG,
-        gravity: ToastGravity.CENTER,
-        timeInSecForIos: 1,
-        backgroundColor: Colors.teal,
-        textColor: Colors.white,
-        fontSize: 16.0);
+      msg: msg,
+      toastLength: Toast.LENGTH_SHORT,
+      gravity: ToastGravity.BOTTOM,
+      backgroundColor: AppColors.emerald,
+      textColor: Colors.white,
+      fontSize: 14.0,
+    );
   }
 
-  _showDialog(
-      context, String ayaNum, String arabicTxt, String bnTxt) {
-    return showDialog(
-        context: context,
-        builder: (BuildContext context) {
-          return AlertDialog(
-            content: SingleChildScrollView(
-              child: ListBody(
-                children: <Widget>[
-                  FlatButton(
-                    padding: EdgeInsets.all(0),
-                    color: Colors.teal,
-                    textColor: Colors.white,
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.start,
-                      children: <Widget>[
-                        IconButton(
-                          icon: Icon(Icons.content_copy),
-                          onPressed: () {
-                            Clipboard.setData(new ClipboardData(
-                                text: "${bnTxt}"));
-                            Navigator.of(context).pop();
-                            showToast();
-                          },
-                        ),
-                        Text("বাংলা কপি"),
-                      ],
-                    ),
-                    onPressed: () {
-                      Clipboard.setData(new ClipboardData(
-                          text:"${bnTxt}"));
-                      Navigator.of(context).pop();
-                      showToast( );
-                    },
-                  ),
-                  SizedBox(
-                    height: 5,
-                  ),
-                  FlatButton(
-                    padding: EdgeInsets.all(0),
-                    color: Colors.teal,
-                    textColor: Colors.white,
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.start,
-                      children: <Widget>[
-                        IconButton(
-                          icon: Icon(Icons.content_copy),
-                          onPressed: () {
-                            Clipboard.setData(new ClipboardData(
-                                text: " ${arabicTxt} \n ${bnTxt}"));
-                            Navigator.of(context).pop();
-                            showToast( );
-                          },
-                        ),
-                        Text("আরবি + বাংলা কপি"),
-                      ],
-                    ),
-                    onPressed: () {
-                      Clipboard.setData(new ClipboardData(
-                          text: "${arabicTxt} \n ${bnTxt}"));
-                      Navigator.of(context).pop();
-                      showToast( );
-                    },
-                  )
-                ],
+  void _showFontSizeSheet() {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (_) => Consumer<SettingsService>(
+        builder: (ctx, settings, _) => Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text("ফন্ট সাইজ",
+                  style: GoogleFonts.poppins(
+                      fontWeight: FontWeight.w600, fontSize: 18)),
+              const SizedBox(height: 20),
+              Text("আরবি টেক্সট: ${settings.arabicFontSize.round()}",
+                  style: GoogleFonts.poppins(fontSize: 13)),
+              Slider(
+                value: settings.arabicFontSize,
+                min: 24,
+                max: 60,
+                divisions: 18,
+                activeColor: AppColors.emerald,
+                label: settings.arabicFontSize.round().toString(),
+                onChanged: settings.setArabicFontSize,
               ),
-            ),
-            actions: <Widget>[],
-          );
-        });
-  }
-
-  Widget arrowThumbs(ayaCount) {
-    ScrollController _arrowsController = ScrollController();
-    return DraggableScrollbar.arrows(
-      // labelTextBuilder: (double offset) => Text("${i}"),
-      controller: _arrowsController,
-      scrollbarAnimationDuration: Duration(seconds: 1),
-      scrollbarTimeToFade: Duration(seconds: 2),
-      backgroundColor: Colors.teal,
-      child: ListView.builder(
-        controller: _arrowsController,
-        itemCount: ayaCount,
-        itemBuilder: (context, i) {
-          return Container(
-            child: Material(
-              elevation: 0.0,
-              borderRadius: BorderRadius.circular(4.0),
-              child: Container(
-                  padding: EdgeInsets.symmetric(horizontal: 0, vertical: 15),
-                  child: GestureDetector(
-                    onLongPress: () {
-                      _showDialog(
-                          context,
-                          "${i + 1}",
-                          AllSuraListArabic[0]["verse"]["verse_${i + 1}"],
-                          AllSuraListArabic[0]["verse_bn"]["verse_${i + 1}"]);
-                    },
-                    child: Column(
-                      children: <Widget>[
-                        Container(
-                          padding: i == 0
-                              ? EdgeInsets.only(bottom: 25)
-                              : EdgeInsets.only(bottom: 0),
-                          child: Text(
-                            getBismillah(
-                                i, AllSuraListArabic[0]["verse"]["verse_${i}"]),
-                            style: TextStyle(color: Colors.teal, fontSize: 25),
-                          ),
-                        ),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: <Widget>[
-                            Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: <Widget>[
-                                Column(
-                                  children: <Widget>[
-                                    CircleAvatar(
-                                      child: Text("${i + 1}",
-                                          style: TextStyle(
-                                            fontSize: 17,
-                                          )),
-                                      foregroundColor: Colors.white,
-                                      backgroundColor: Colors.teal,
-                                      radius: 20,
-                                    ),
-                                    IconButton(
-                                      onPressed: () {
-                                        setState(() {
-                                          shareText = AllSuraListArabic[0]
-                                                  ["verse"]["verse_${i + 1}"] +
-                                              ",\n" +
-                                              AllSuraListArabic[0]["verse_bn"]
-                                                  ["verse_${i + 1}"];
-                                        });
-                                        Share.share(shareText);
-                                      },
-                                      icon: Icon(Icons.share),
-                                      color: Colors.blueGrey,
-                                    )
-                                  ],
-                                )
-                              ],
-                            ),
-                            Expanded(
-                              child: Container(
-                                  padding: EdgeInsets.symmetric(
-                                      horizontal: 10, vertical: 0),
-                                  child: Visibility(
-                                      visible: onlyArabic,
-//Default is true,
-                                      child: Text(
-                                        AllSuraListArabic[0]["verse"]
-                                            ["verse_${i + 1}"],
-                                        style: TextStyle(
-                                            color: Color(0xFF000000),
-                                            fontWeight: FontWeight.w400,
-                                            wordSpacing: 0.5,
-                                            fontFamily: 'Lateef',
-                                            fontSize: 40,
-                                            letterSpacing: 0),
-                                        textAlign: TextAlign.right,
-                                      ))),
-                            )
-                          ],
-                        ),
-                        SizedBox(
-                          height: 15,
-                        ),
-                        Column(
-                          mainAxisAlignment: MainAxisAlignment.start,
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: <Widget>[
-                            Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              mainAxisAlignment: MainAxisAlignment.start,
-                              children: <Widget>[
-                                Expanded(
-                                  child: Container(
-                                    padding: EdgeInsets.symmetric(
-                                        horizontal: 10, vertical: 0),
-                                    child: Visibility(
-                                      visible: onlyBangla,
-//Default is true,
-                                      child: Text(
-                                        AllSuraListArabic[0]["verse_bn"]
-                                            ["verse_${i + 1}"],
-                                        style: TextStyle(
-                                          fontWeight: FontWeight.w400,
-                                          fontSize: 20,
-                                        ),
-                                        textAlign: TextAlign.start,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                                SizedBox(
-                                  height: 5,
-                                ),
-                              ],
-                            ),
-                            Container(
-                              padding: EdgeInsets.all(15),
-                              child: Text(
-                                getHadisErMan(i),
-                                style: TextStyle(
-                                  color: i == 30 ? Colors.deepOrange : Colors.green, fontSize: 16, fontWeight: FontWeight.w500
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  )),
-            ),
-          );
-        },
+              Text("অনুবাদ টেক্সট: ${settings.translationFontSize.round()}",
+                  style: GoogleFonts.poppins(fontSize: 13)),
+              Slider(
+                value: settings.translationFontSize,
+                min: 12,
+                max: 28,
+                divisions: 16,
+                activeColor: AppColors.emeraldLight,
+                label: settings.translationFontSize.round().toString(),
+                onChanged: settings.setTranslationFontSize,
+              ),
+              const SizedBox(height: 8),
+            ],
+          ),
+        ),
       ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    ScrollController _arrowsController =
-        ScrollController(initialScrollOffset: 50.0);
+    final settings = context.watch<SettingsService>();
+    final isDark = settings.isDarkMode;
+
     return Scaffold(
-      appBar: PreferredSize(
-          preferredSize: Size.fromHeight(40.0),
-          child: AppBar(
-            backgroundColor: Colors.teal,
-            iconTheme: IconThemeData(color: Colors.tealAccent),
-            title: Text(
-              "৪০ হাদিস",
-              style: TextStyle(fontSize: 16),
-            ),
-            centerTitle: true,
-            actions: <Widget>[
-              Theme(
-                data: Theme.of(context).copyWith(
-                  cardColor: Colors.teal,
-                ),
-                child: InkWell(
-                  onTap: () {},
-                  child: PopupMenuButton(
-                    icon: Icon(
-                      Icons.menu,
-                      color: Colors.white,
-                    ),
-                    offset: Offset(0, 35),
-                    elevation: 10,
-                    onSelected: (value) {
-                      if (value == 'arBng') {
-                        setState(() {
-                          this.onlyBangla = true;
-                          this.onlyArabic = true;
-                          this.arBng = true;
-                          this.onlyBng = false;
-                          this.onlyAr = false;
-                        });
-                      } else if (value == 'onlyBng') {
-                        setState(() {
-                          this.onlyBangla = true;
-                          this.onlyArabic = false;
-                          this.arBng = false;
-                          this.onlyBng = true;
-                          this.onlyAr = false;
-                        });
-                      } else if (value == 'onlyAr') {
-                        setState(() {
-                          this.onlyBangla = false;
-                          this.onlyArabic = true;
-                          this.arBng = false;
-                          this.onlyBng = false;
-                          this.onlyAr = true;
-                        });
-                      }
-                    },
-                    itemBuilder: (BuildContext context) {
-                      return [
-                        CheckedPopupMenuItem(
-                          child: Text("আরবি + বাংলা",
-                              style: TextStyle(color: Colors.white)),
-                          checked: this.arBng,
-                          value: "arBng",
-                        ),
-                        CheckedPopupMenuItem(
-                          child: Text("শুধু বাংলা",
-                              style: TextStyle(color: Colors.white)),
-                          checked: this.onlyBng,
-                          value: "onlyBng",
-                        ),
-                        CheckedPopupMenuItem(
-                          child: Text("Only Arabic",
-                              style: TextStyle(color: Colors.white)),
-                          checked: this.onlyAr,
-                          value: "onlyAr",
-                        ),
-                      ];
-                    },
-                  ),
-                ),
-              ),
+      appBar: AppBar(
+        title: const Text("৪০ হাদিস"),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.text_fields_rounded),
+            onPressed: _showFontSizeSheet,
+            tooltip: "ফন্ট সাইজ",
+          ),
+          IconButton(
+            icon: Icon(isDark ? Icons.light_mode_rounded : Icons.dark_mode_rounded),
+            onPressed: settings.toggleDarkMode,
+          ),
+          PopupMenuButton<String>(
+            icon: const Icon(Icons.translate_rounded),
+            color: isDark ? AppColors.surfaceDark : AppColors.emerald,
+            onSelected: (v) {
+              setState(() {
+                switch (v) {
+                  case 'all':
+                    _showArabic = _showBangla = true;
+                    break;
+                  case 'ar':
+                    _showArabic = true;
+                    _showBangla = false;
+                    break;
+                  case 'bn':
+                    _showBangla = true;
+                    _showArabic = false;
+                    break;
+                }
+              });
+            },
+            itemBuilder: (_) => [
+              PopupMenuItem(
+                  value: 'all',
+                  child: Text("আরবি + বাংলা",
+                      style: GoogleFonts.poppins(color: Colors.white, fontSize: 13))),
+              PopupMenuItem(
+                  value: 'ar',
+                  child: Text("শুধু আরবি",
+                      style: GoogleFonts.poppins(color: Colors.white, fontSize: 13))),
+              PopupMenuItem(
+                  value: 'bn',
+                  child: Text("শুধু বাংলা",
+                      style: GoogleFonts.poppins(color: Colors.white, fontSize: 13))),
             ],
-            titleSpacing: 0,
-          )),
-      body: Container(child: arrowThumbs(this.ayaCount)),
+          ),
+        ],
+      ),
+      body: _hadisData.isEmpty
+          ? const Center(child: CircularProgressIndicator(color: AppColors.emerald))
+          : Builder(
+              builder: (context) {
+                final matchingIndices = <int>[];
+                for (int i = 1; i <= _totalHadis; i++) {
+                  final arabic = _getArabic(i);
+                  final bangla = _getBangla(i);
+                  final numStr = i.toString();
+                  if (_searchQuery.isEmpty ||
+                      arabic.toLowerCase().contains(_searchQuery) ||
+                      bangla.toLowerCase().contains(_searchQuery) ||
+                      numStr.contains(_searchQuery)) {
+                    matchingIndices.add(i);
+                  }
+                }
+
+                return Column(
+                  children: [
+                    Container(
+                      color: isDark ? AppColors.emeraldDark : AppColors.emerald,
+                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                      child: TextField(
+                        controller: _searchCtrl,
+                        style: GoogleFonts.poppins(color: Colors.white),
+                        decoration: InputDecoration(
+                          hintText: "হাদিস খুঁজুন...",
+                          hintStyle: GoogleFonts.poppins(color: Colors.white54),
+                          prefixIcon: const Icon(Icons.search, color: Colors.white54),
+                          suffixIcon: _searchCtrl.text.isNotEmpty
+                              ? IconButton(
+                                  icon: const Icon(Icons.clear, color: Colors.white54),
+                                  onPressed: () => _searchCtrl.clear(),
+                                )
+                              : null,
+                          filled: true,
+                          fillColor: Colors.white12,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(14),
+                            borderSide: BorderSide.none,
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(vertical: 0),
+                        ),
+                      ),
+                    ),
+                    Expanded(
+                      child: matchingIndices.isEmpty
+                          ? Center(
+                              child: Text(
+                                "কোনো হাদিস পাওয়া যায়নি",
+                                style: GoogleFonts.poppins(color: Colors.grey),
+                              ),
+                            )
+                          : Scrollbar(
+                              controller: _scrollController,
+                              thumbVisibility: true,
+                              interactive: true,
+                              thickness: 8,
+                              radius: const Radius.circular(8),
+                              child: ListView.builder(
+                                controller: _scrollController,
+                                padding: const EdgeInsets.all(12),
+                                itemCount: matchingIndices.length,
+                                itemBuilder: (ctx, i) {
+                                  final hadisNum = matchingIndices[i];
+                final arabic = _getArabic(hadisNum);
+                final bangla = _getBangla(hadisNum);
+                final isSahih = _isSahih(hadisNum);
+
+                return Container(
+                  margin: const EdgeInsets.only(bottom: 12),
+                  decoration: BoxDecoration(
+                    color: isDark ? AppColors.cardDark : AppColors.cardLight,
+                    borderRadius: BorderRadius.circular(18),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: isDark ? 0.25 : 0.06),
+                        blurRadius: 8,
+                        offset: const Offset(0, 3),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      // ── Header ──
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 14, vertical: 10),
+                        decoration: BoxDecoration(
+                          color: isDark
+                              ? AppColors.emeraldDark.withValues(alpha: 0.6)
+                              : AppColors.emerald.withValues(alpha: 0.08),
+                          borderRadius: const BorderRadius.only(
+                            topLeft: Radius.circular(18),
+                            topRight: Radius.circular(18),
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 34,
+                              height: 34,
+                              decoration: const BoxDecoration(
+                                gradient: LinearGradient(
+                                  colors: [
+                                    Color(0xFF1A237E),
+                                    Color(0xFF283593)
+                                  ],
+                                ),
+                                shape: BoxShape.circle,
+                              ),
+                              child: Center(
+                                child: Text(
+                                  '$hadisNum',
+                                  style: GoogleFonts.poppins(
+                                    color: Colors.white,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            Text(
+                              "হাদিস নং $hadisNum",
+                              style: GoogleFonts.poppins(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                color: isDark
+                                    ? AppColors.textPrimaryDark
+                                    : AppColors.emerald,
+                              ),
+                            ),
+                            const Spacer(),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 10, vertical: 3),
+                              decoration: BoxDecoration(
+                                color: isSahih
+                                    ? Colors.green.withValues(alpha: 0.15)
+                                    : Colors.orange.withValues(alpha: 0.15),
+                                borderRadius: BorderRadius.circular(10),
+                                border: Border.all(
+                                  color: isSahih
+                                      ? Colors.green.withValues(alpha: 0.4)
+                                      : Colors.orange.withValues(alpha: 0.4),
+                                ),
+                              ),
+                              child: Text(
+                                isSahih ? "সহিহ" : "নির্নিত নয়",
+                                style: GoogleFonts.poppins(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w600,
+                                  color: isSahih ? Colors.green : Colors.orange,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+
+                      // ── Content ──
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(14, 14, 14, 8),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            if (_showArabic && arabic.isNotEmpty) ...[
+                              Text(
+                                arabic,
+                                style: TextStyle(
+                                  fontFamily: 'Lateef',
+                                  fontSize: settings.arabicFontSize,
+                                  color: isDark
+                                      ? AppColors.arabicDark
+                                      : AppColors.arabicLight,
+                                  height: 1.8,
+                                ),
+                                textAlign: TextAlign.right,
+                              ),
+                              Divider(
+                                color: isDark
+                                    ? Colors.white12
+                                    : AppColors.emerald.withValues(alpha: 0.12),
+                                height: 20,
+                              ),
+                            ],
+                            if (_showBangla && bangla.isNotEmpty)
+                              Text(
+                                bangla,
+                                style: GoogleFonts.poppins(
+                                  fontSize: settings.translationFontSize,
+                                  color: isDark
+                                      ? AppColors.textPrimaryDark
+                                      : AppColors.textPrimaryLight,
+                                  height: 1.7,
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
+
+                      // ── Actions ──
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(10, 4, 10, 10),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            _actionBtn(
+                              icon: Icons.share_rounded,
+                              isDark: isDark,
+                              onTap: () => Share.share(
+                                  "হাদিস $hadisNum\n$arabic\n$bangla"),
+                            ),
+                            const SizedBox(width: 4),
+                            _actionBtn(
+                              icon: Icons.content_copy_rounded,
+                              isDark: isDark,
+                              onTap: () {
+                                Clipboard.setData(
+                                    ClipboardData(text: "$arabic\n$bangla"));
+                                _showToast("হাদিস $hadisNum কপি হয়েছে");
+                              },
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+),
+    );
+  }
+
+  Widget _actionBtn(
+      {required IconData icon, required bool isDark, required VoidCallback onTap}) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(10),
+      child: Container(
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          color: isDark ? Colors.white.withValues(alpha: 0.08) : AppColors.emerald.withValues(alpha: 0.07),
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Icon(
+          icon,
+          size: 18,
+          color: isDark ? AppColors.goldLight : AppColors.emerald,
+        ),
+      ),
     );
   }
 }
