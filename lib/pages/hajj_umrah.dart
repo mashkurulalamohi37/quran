@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:fluttertoast/fluttertoast.dart';
@@ -15,15 +16,20 @@ class HajjUmrahScreen extends StatefulWidget {
 
 class _HajjUmrahScreenState extends State<HajjUmrahScreen> with SingleTickerProviderStateMixin {
   late TabController _tabController;
+  Timer? _timer;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
+    _timer = Timer.periodic(const Duration(seconds: 30), (timer) {
+      if (mounted) setState(() {});
+    });
   }
 
   @override
   void dispose() {
+    _timer?.cancel();
     _tabController.dispose();
     super.dispose();
   }
@@ -38,6 +44,151 @@ class _HajjUmrahScreenState extends State<HajjUmrahScreen> with SingleTickerProv
       backgroundColor: AppColors.emerald,
       textColor: Colors.white,
       fontSize: 14.0,
+    );
+  }
+
+  String _toBnNum(String input) {
+    const english = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
+    const bengali = ['০', '১', '২', '৩', '৪', '৫', '৬', '৭', '৮', '৯'];
+    for (int i = 0; i < 10; i++) {
+      input = input.replaceAll(english[i], bengali[i]);
+    }
+    return input;
+  }
+
+  String _fmtTimeBn(DateTime dt) {
+    final h = dt.hour.toString().padLeft(2, '0');
+    final m = dt.minute.toString().padLeft(2, '0');
+    return _toBnNum("$h:$m");
+  }
+
+  Widget _buildTimeZoneHeader(bool isDark) {
+    final now = DateTime.now();
+    final makkahTime = now.subtract(const Duration(hours: 3));
+    final cardBg = isDark ? AppColors.cardDark : Colors.white;
+    final txtColor = isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight;
+
+    return Container(
+      margin: const EdgeInsets.fromLTRB(16, 16, 16, 4),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: cardBg,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: isDark ? Colors.white10 : Colors.black.withValues(alpha: 0.05)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Expanded(
+            child: Column(
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.location_city_rounded, color: AppColors.emerald, size: 14),
+                    const SizedBox(width: 4),
+                    Text(
+                      "বাংলাদেশ",
+                      style: GoogleFonts.poppins(
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                        color: txtColor,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  _fmtTimeBn(now),
+                  style: GoogleFonts.poppins(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.emerald,
+                  ),
+                ),
+                Text(
+                  "GMT+6",
+                  style: GoogleFonts.poppins(
+                    fontSize: 8.5,
+                    color: isDark ? Colors.white60 : Colors.black54,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Container(
+            height: 35,
+            width: 1,
+            color: isDark ? Colors.white24 : Colors.black12,
+          ),
+          const SizedBox(width: 6),
+          Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.sync_alt_rounded, color: AppColors.gold, size: 14),
+              const SizedBox(height: 2),
+              Text(
+                "৩ ঘণ্টা পিছিয়ে",
+                style: GoogleFonts.poppins(
+                  fontSize: 9,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.gold,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(width: 6),
+          Container(
+            height: 35,
+            width: 1,
+            color: isDark ? Colors.white24 : Colors.black12,
+          ),
+          Expanded(
+            child: Column(
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.mosque_rounded, color: AppColors.gold, size: 14),
+                    const SizedBox(width: 4),
+                    Text(
+                      "মক্কা সময়",
+                      style: GoogleFonts.poppins(
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                        color: txtColor,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  _fmtTimeBn(makkahTime),
+                  style: GoogleFonts.poppins(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.gold,
+                  ),
+                ),
+                Text(
+                  "GMT+3",
+                  style: GoogleFonts.poppins(
+                    fontSize: 8.5,
+                    color: isDark ? Colors.white60 : Colors.black54,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -63,11 +214,18 @@ class _HajjUmrahScreenState extends State<HajjUmrahScreen> with SingleTickerProv
           ],
         ),
       ),
-      body: TabBarView(
-        controller: _tabController,
+      body: Column(
         children: [
-          _buildUmrahTab(context, settings, isDark),
-          _buildHajjTab(context, settings, isDark),
+          _buildTimeZoneHeader(isDark),
+          Expanded(
+            child: TabBarView(
+              controller: _tabController,
+              children: [
+                _buildUmrahTab(context, settings, isDark),
+                _buildHajjTab(context, settings, isDark),
+              ],
+            ),
+          ),
         ],
       ),
     );
@@ -77,14 +235,153 @@ class _HajjUmrahScreenState extends State<HajjUmrahScreen> with SingleTickerProv
     final steps = _getUmrahSteps();
     return _buildTimelineList(context, steps, settings.completedUmrahSteps, (stepId) {
       settings.toggleUmrahStep(stepId);
-    }, isDark);
+    }, isDark, true);
   }
 
   Widget _buildHajjTab(BuildContext context, SettingsService settings, bool isDark) {
     final steps = _getHajjSteps();
     return _buildTimelineList(context, steps, settings.completedHajjSteps, (stepId) {
       settings.toggleHajjStep(stepId);
-    }, isDark);
+    }, isDark, false);
+  }
+
+  Widget _buildRulesExpansionTile(bool isUmrah, bool isDark) {
+    final cardBg = isDark ? AppColors.cardDark : AppColors.cardLight;
+    final title = isUmrah ? "ওমরাহর ফরজ ও ওয়াজিব কাজসমূহ" : "হজের ফরজ ও ওয়াজিব কাজসমূহ";
+
+    return Container(
+      decoration: BoxDecoration(
+        color: cardBg,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: isDark ? Colors.white10 : Colors.black12),
+      ),
+      child: Theme(
+        data: ThemeData(dividerColor: Colors.transparent),
+        child: ExpansionTile(
+          leading: const Icon(Icons.bookmark_added_rounded, color: AppColors.emerald, size: 20),
+          title: Text(
+            title,
+            style: GoogleFonts.poppins(
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+              color: isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight,
+            ),
+          ),
+          children: [
+            Padding(
+              padding: const EdgeInsets.only(left: 16, right: 16, bottom: 16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: isUmrah
+                    ? [
+                        Text(
+                          "ফরজসমূহ (২টি):",
+                          style: GoogleFonts.poppins(fontSize: 11.5, fontWeight: FontWeight.bold, color: Colors.redAccent),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          "১. ইহরাম পরিধান ও ওমরাহর নিয়ত করা।\n২. পবিত্র কাবা শরীফ তাওয়াফ করা।",
+                          style: GoogleFonts.poppins(fontSize: 11, height: 1.5),
+                        ),
+                        const SizedBox(height: 12),
+                        Text(
+                          "ওয়াজিবসমূহ (২টি):",
+                          style: GoogleFonts.poppins(fontSize: 11.5, fontWeight: FontWeight.bold, color: AppColors.gold),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          "১. সাফা ও মারওয়া পাহাড়ের মাঝে ৭ বার সাঈ করা।\n২. মাথার চুল মুণ্ডন করা বা ছোট করা (হালক/কসর)।",
+                          style: GoogleFonts.poppins(fontSize: 11, height: 1.5),
+                        ),
+                      ]
+                    : [
+                        Text(
+                          "ফরজসমূহ (৩টি):",
+                          style: GoogleFonts.poppins(fontSize: 11.5, fontWeight: FontWeight.bold, color: Colors.redAccent),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          "১. ইহরাম পরিধান ও হজের নিয়ত করা।\n২. ৯ই জিলহজ আরাফাতের ময়দানে অবস্থান করা।\n৩. তাওয়াফে জিয়ারত (ফরজ তাওয়াফ) সম্পন্ন করা।",
+                          style: GoogleFonts.poppins(fontSize: 11, height: 1.5),
+                        ),
+                        const SizedBox(height: 12),
+                        Text(
+                          "ওয়াজিবসমূহ (৬টি):",
+                          style: GoogleFonts.poppins(fontSize: 11.5, fontWeight: FontWeight.bold, color: AppColors.gold),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          "১. ৯ই জিলহজ দিবাগত রাতে মুজদালিফায় অবস্থান করা।\n২. সাফা ও মারওয়া পাহাড়ের মাঝে সাঈ করা।\n৩. শয়তানকে পাথর (কঙ্কর) নিক্ষেপ করা।\n৪. মীনায় কোরবানি করা (কিরান ও তামাত্তু হজকারীদের জন্য)।\n৫. মাথার চুল মুণ্ডন করা বা ছোট করা (হালক/কসর)।\n৬. বিদায়ী তাওয়াফ আদায় করা (মক্কার বাইরের হাজীদের জন্য)।",
+                          style: GoogleFonts.poppins(fontSize: 11, height: 1.5),
+                        ),
+                      ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildChecklistExpansionTile(bool isDark) {
+    final cardBg = isDark ? AppColors.cardDark : AppColors.cardLight;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: cardBg,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: isDark ? Colors.white10 : Colors.black12),
+      ),
+      child: Theme(
+        data: ThemeData(dividerColor: Colors.transparent),
+        child: ExpansionTile(
+          leading: const Icon(Icons.work_outline_rounded, color: AppColors.gold, size: 20),
+          title: Text(
+            "প্রয়োজনীয় প্রস্তুতি ও মালামাল তালিকা",
+            style: GoogleFonts.poppins(
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+              color: isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight,
+            ),
+          ),
+          children: [
+            Padding(
+              padding: const EdgeInsets.only(left: 16, right: 16, bottom: 16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _checklistGroup("১. গুরুত্বপূর্ণ কাগজপত্র:", "পাসপোর্ট ও ভিসা কপি, হজের বুকিং ও টিকিটের কপি, ছবি, মেডিকেল সার্টিফিকেট ও আইডি কার্ড।"),
+                  _checklistGroup("২. পোশাক ও ইহরাম:", "সেলাইবিহীন সাদা এহরামের কাপড় (অন্তত ২ সেট), বেল্ট (টাকা রাখার জন্য পকেটযুক্ত), আরামদায়ক ও হালকা স্যান্ডেল।"),
+                  _checklistGroup("৩. ব্যক্তিগত পরিচ্ছন্নতা (সুগন্ধিহীন):", "সুগন্ধিহীন সাবান, শ্যাম্পু, টুথপেস্ট ও নারকেল তেল (ইহরাম অবস্থায় সুগন্ধি ব্যবহার নিষিদ্ধ)।"),
+                  _checklistGroup("৪. প্রাথমিক চিকিৎসা ও ওষুধ:", "নিয়মিত সেবনের ওষুধ, জ্বর-সর্দি, গ্যাস ও ব্যথানাশক ট্যাবলেট, ওআরএস (স্যালাইন), ভ্যাসলিন (ঘর্ষণজনিত ক্ষত এড়াতে)।"),
+                  _checklistGroup("৫. নিত্যপ্রয়োজনীয় জিনিস:", "ছোট কাঁধের ব্যাগ (মিনা-মুজদালিফার জন্য), পকেট জায়নামাজ, তসবিহ, ছাতা, রোদ চশমা ও পানির বোতল।"),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _checklistGroup(String title, String desc) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: GoogleFonts.poppins(fontSize: 11.5, fontWeight: FontWeight.bold, color: AppColors.emerald),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            desc,
+            style: GoogleFonts.poppins(fontSize: 11, height: 1.4),
+          ),
+        ],
+      ),
+    );
   }
 
   Widget _buildTimelineList(
@@ -93,260 +390,272 @@ class _HajjUmrahScreenState extends State<HajjUmrahScreen> with SingleTickerProv
     Set<String> completedSteps,
     Function(String) onToggle,
     bool isDark,
+    bool isUmrah,
   ) {
-    return ListView.builder(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
-      itemCount: steps.length,
-      itemBuilder: (context, index) {
-        final step = steps[index];
-        final isCompleted = completedSteps.contains(step.id);
-        final isLast = index == steps.length - 1;
+    final txtColor = isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight;
 
-        return IntrinsicHeight(
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // Timeline vertical line & node
-              Column(
-                children: [
-                  GestureDetector(
-                    onTap: () => onToggle(step.id),
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 250),
-                      width: 32,
-                      height: 32,
-                      decoration: BoxDecoration(
-                        color: isCompleted ? AppColors.emerald : (isDark ? AppColors.cardDark : Colors.white),
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: isCompleted ? AppColors.emerald : AppColors.gold,
-                          width: 2,
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: (isCompleted ? AppColors.emerald : AppColors.gold).withValues(alpha: 0.25),
-                            blurRadius: 6,
-                            offset: const Offset(0, 2),
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: [
+        _buildRulesExpansionTile(isUmrah, isDark),
+        const SizedBox(height: 12),
+        _buildChecklistExpansionTile(isDark),
+        const SizedBox(height: 20),
+        Text(
+          "ধাপসমূহ (Step-by-Step Guide)",
+          style: GoogleFonts.poppins(
+            fontSize: 14,
+            fontWeight: FontWeight.bold,
+            color: txtColor,
+          ),
+        ),
+        const SizedBox(height: 12),
+        ...steps.asMap().entries.map((entry) {
+          final index = entry.key;
+          final step = entry.value;
+          final isCompleted = completedSteps.contains(step.id);
+          final isLast = index == steps.length - 1;
+
+          return IntrinsicHeight(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Column(
+                  children: [
+                    GestureDetector(
+                      onTap: () => onToggle(step.id),
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 250),
+                        width: 32,
+                        height: 32,
+                        decoration: BoxDecoration(
+                          color: isCompleted ? AppColors.emerald : (isDark ? AppColors.cardDark : Colors.white),
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: isCompleted ? AppColors.emerald : AppColors.gold,
+                            width: 2,
                           ),
-                        ],
-                      ),
-                      child: isCompleted
-                          ? const Icon(Icons.check_rounded, color: Colors.white, size: 18)
-                          : Center(
-                              child: Text(
-                                "${index + 1}",
-                                style: GoogleFonts.poppins(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 13,
-                                  color: AppColors.goldDark,
+                          boxShadow: [
+                            BoxShadow(
+                              color: (isCompleted ? AppColors.emerald : AppColors.gold).withValues(alpha: 0.25),
+                              blurRadius: 6,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: isCompleted
+                            ? const Icon(Icons.check_rounded, color: Colors.white, size: 18)
+                            : Center(
+                                child: Text(
+                                  "${index + 1}",
+                                  style: GoogleFonts.poppins(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 13,
+                                    color: AppColors.goldDark,
+                                  ),
                                 ),
                               ),
+                      ),
+                    ),
+                    if (!isLast)
+                      Expanded(
+                        child: Container(
+                          width: 2,
+                          color: isCompleted ? AppColors.emerald : AppColors.gold.withValues(alpha: 0.4),
+                        ),
+                      ),
+                  ],
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.only(bottom: 20),
+                    child: Card(
+                      margin: EdgeInsets.zero,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        side: BorderSide(
+                          color: isCompleted
+                              ? AppColors.emerald.withValues(alpha: 0.35)
+                              : (isDark ? Colors.white10 : Colors.black12),
+                          width: 1,
+                        ),
+                      ),
+                      child: Theme(
+                        data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+                        child: ExpansionTile(
+                          collapsedShape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                          backgroundColor: isCompleted
+                              ? AppColors.emerald.withValues(alpha: isDark ? 0.05 : 0.02)
+                              : null,
+                          title: Text(
+                            step.title,
+                            style: GoogleFonts.poppins(
+                              fontWeight: FontWeight.w700,
+                              fontSize: 14,
+                              color: isCompleted
+                                  ? AppColors.emeraldLight
+                                  : (isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight),
                             ),
-                    ),
-                  ),
-                  if (!isLast)
-                    Expanded(
-                      child: Container(
-                        width: 2,
-                        color: isCompleted ? AppColors.emerald : AppColors.gold.withValues(alpha: 0.4),
-                      ),
-                    ),
-                ],
-              ),
-              const SizedBox(width: 14),
-              // Card Details
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.only(bottom: 20),
-                  child: Card(
-                    margin: EdgeInsets.zero,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                      side: BorderSide(
-                        color: isCompleted
-                            ? AppColors.emerald.withValues(alpha: 0.35)
-                            : (isDark ? Colors.white10 : Colors.black12),
-                        width: 1,
-                      ),
-                    ),
-                    child: Theme(
-                      data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
-                      child: ExpansionTile(
-                        collapsedShape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                        backgroundColor: isCompleted
-                            ? AppColors.emerald.withValues(alpha: isDark ? 0.05 : 0.02)
-                            : null,
-                        title: Text(
-                          step.title,
-                          style: GoogleFonts.poppins(
-                            fontWeight: FontWeight.w700,
-                            fontSize: 14,
-                            color: isCompleted
-                                ? AppColors.emeraldLight
-                                : (isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight),
                           ),
-                        ),
-                        subtitle: Text(
-                          step.subtitle,
-                          style: GoogleFonts.poppins(
-                            fontSize: 11,
-                            color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight,
+                          subtitle: Text(
+                            step.subtitle,
+                            style: GoogleFonts.poppins(
+                              fontSize: 11,
+                              color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight,
+                            ),
                           ),
-                        ),
-                        leading: IconButton(
-                          icon: Icon(
-                            isCompleted ? Icons.check_box_rounded : Icons.check_box_outline_blank_rounded,
-                            color: isCompleted ? AppColors.emerald : AppColors.textSecondaryLight,
+                          leading: IconButton(
+                            icon: Icon(
+                              isCompleted ? Icons.check_box_rounded : Icons.check_box_outline_blank_rounded,
+                              color: isCompleted ? AppColors.emerald : AppColors.textSecondaryLight,
+                            ),
+                            onPressed: () => onToggle(step.id),
                           ),
-                          onPressed: () => onToggle(step.id),
-                        ),
-                        children: [
-                          Padding(
-                            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const Divider(height: 1),
-                                const SizedBox(height: 12),
-                                Text(
-                                  step.description,
-                                  style: GoogleFonts.poppins(
-                                    fontSize: 13,
-                                    height: 1.5,
-                                    color: isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight,
-                                  ),
-                                ),
-                                if (step.actions.isNotEmpty) ...[
+                          children: [
+                            Padding(
+                              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Divider(height: 1),
                                   const SizedBox(height: 12),
                                   Text(
-                                    "করণীয় কার্যাবলী:",
+                                    step.description,
                                     style: GoogleFonts.poppins(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 12,
-                                      color: AppColors.goldDark,
+                                      fontSize: 13,
+                                      height: 1.5,
+                                      color: isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight,
                                     ),
                                   ),
-                                  const SizedBox(height: 6),
-                                  ...step.actions.map((act) => Padding(
-                                        padding: const EdgeInsets.only(bottom: 4),
-                                        child: Row(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
-                                          children: [
-                                            const Text("• ", style: TextStyle(fontWeight: FontWeight.bold)),
-                                            Expanded(
-                                              child: Text(
-                                                act,
+                                  if (step.actions.isNotEmpty) ...[
+                                    const SizedBox(height: 12),
+                                    Text(
+                                      "করণীয় কার্যাবলী:",
+                                      style: GoogleFonts.poppins(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 12,
+                                        color: AppColors.goldDark,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 6),
+                                    ...step.actions.map((act) => Padding(
+                                          padding: const EdgeInsets.only(bottom: 4),
+                                          child: Row(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            children: [
+                                              const Text("• ", style: TextStyle(fontWeight: FontWeight.bold)),
+                                              Expanded(
+                                                child: Text(
+                                                  act,
+                                                  style: GoogleFonts.poppins(
+                                                    fontSize: 12,
+                                                    color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight,
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        )),
+                                  ],
+                                  if (step.duas.isNotEmpty) ...[
+                                    const SizedBox(height: 12),
+                                    Text(
+                                      "প্রয়োজনীয় দোয়া ও নিয়ত:",
+                                      style: GoogleFonts.poppins(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 12,
+                                        color: AppColors.goldDark,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 8),
+                                    ...step.duas.map((dua) => Container(
+                                          margin: const EdgeInsets.only(bottom: 12),
+                                          padding: const EdgeInsets.all(12),
+                                          decoration: BoxDecoration(
+                                            color: isDark ? Colors.white.withValues(alpha: 0.02) : Colors.black.withValues(alpha: 0.02),
+                                            borderRadius: BorderRadius.circular(12),
+                                            border: Border.all(
+                                              color: isDark ? Colors.white10 : Colors.black12,
+                                            ),
+                                          ),
+                                          child: Column(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            children: [
+                                              Row(
+                                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                                children: [
+                                                  Text(
+                                                    dua.title,
+                                                    style: GoogleFonts.poppins(
+                                                      fontWeight: FontWeight.bold,
+                                                      fontSize: 12,
+                                                      color: AppColors.emerald,
+                                                    ),
+                                                  ),
+                                                  IconButton(
+                                                    icon: const Icon(Icons.copy_rounded, size: 16, color: AppColors.emerald),
+                                                    onPressed: () => _copyToClipboard(
+                                                      context,
+                                                      dua.arabic,
+                                                      dua.pronunciation,
+                                                      dua.translation,
+                                                      dua.title,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                              const SizedBox(height: 6),
+                                              Align(
+                                                alignment: Alignment.centerRight,
+                                                child: Text(
+                                                  dua.arabic,
+                                                  style: TextStyle(
+                                                    fontFamily: 'Lateef',
+                                                    fontSize: 24,
+                                                    height: 1.8,
+                                                    color: isDark ? AppColors.arabicDark : AppColors.arabicLight,
+                                                  ),
+                                                  textAlign: TextAlign.right,
+                                                  textDirection: TextDirection.rtl,
+                                                ),
+                                              ),
+                                              const SizedBox(height: 8),
+                                              Text(
+                                                "উচ্চারণ: ${dua.pronunciation}",
+                                                style: GoogleFonts.poppins(
+                                                  fontSize: 12,
+                                                  fontStyle: FontStyle.italic,
+                                                  color: isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight,
+                                                ),
+                                              ),
+                                              const SizedBox(height: 4),
+                                              Text(
+                                                "অনুবাদ: ${dua.translation}",
                                                 style: GoogleFonts.poppins(
                                                   fontSize: 12,
                                                   color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight,
                                                 ),
                                               ),
-                                            ),
-                                          ],
-                                        ),
-                                      )),
-                                ],
-                                if (step.duas.isNotEmpty) ...[
-                                  const SizedBox(height: 16),
-                                  Text(
-                                    "প্রয়োজনীয় দোয়া সমূহ:",
-                                    style: GoogleFonts.poppins(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 12,
-                                      color: AppColors.emeraldLight,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 8),
-                                  ...step.duas.map((dua) => Container(
-                                        width: double.infinity,
-                                        margin: const EdgeInsets.only(bottom: 12),
-                                        padding: const EdgeInsets.all(12),
-                                        decoration: BoxDecoration(
-                                          color: isDark ? Colors.white.withValues(alpha: 0.03) : Colors.black.withValues(alpha: 0.02),
-                                          borderRadius: BorderRadius.circular(12),
-                                          border: Border.all(
-                                            color: isDark ? Colors.white10 : Colors.black12,
+                                            ],
                                           ),
-                                        ),
-                                        child: Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
-                                          children: [
-                                            Row(
-                                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                              children: [
-                                                Expanded(
-                                                  child: Text(
-                                                    dua.title,
-                                                    style: GoogleFonts.poppins(
-                                                      fontWeight: FontWeight.w600,
-                                                      fontSize: 12,
-                                                      color: AppColors.gold,
-                                                    ),
-                                                  ),
-                                                ),
-                                                IconButton(
-                                                  icon: const Icon(Icons.copy_rounded, size: 16),
-                                                  onPressed: () => _copyToClipboard(
-                                                    context,
-                                                    dua.arabic,
-                                                    dua.pronunciation,
-                                                    dua.translation,
-                                                    dua.title,
-                                                  ),
-                                                  tooltip: "কপি করুন",
-                                                ),
-                                              ],
-                                            ),
-                                            const SizedBox(height: 6),
-                                            Align(
-                                              alignment: Alignment.centerRight,
-                                              child: Text(
-                                                dua.arabic,
-                                                style: TextStyle(
-                                                  fontFamily: 'Lateef',
-                                                  fontSize: 24,
-                                                  height: 1.8,
-                                                  color: isDark ? AppColors.arabicDark : AppColors.arabicLight,
-                                                ),
-                                                textAlign: TextAlign.right,
-                                                textDirection: TextDirection.rtl,
-                                              ),
-                                            ),
-                                            const SizedBox(height: 8),
-                                            Text(
-                                              "উচ্চারণ: ${dua.pronunciation}",
-                                              style: GoogleFonts.poppins(
-                                                fontSize: 12,
-                                                fontStyle: FontStyle.italic,
-                                                color: isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight,
-                                              ),
-                                            ),
-                                            const SizedBox(height: 4),
-                                            Text(
-                                              "অনুবাদ: ${dua.translation}",
-                                              style: GoogleFonts.poppins(
-                                                fontSize: 12,
-                                                color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      )),
+                                        )),
+                                  ],
                                 ],
-                              ],
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     ),
                   ),
                 ),
-              ),
-            ],
-          ),
-        );
-      },
+              ],
+            ),
+          );
+        }),
+      ],
     );
   }
 
@@ -402,7 +711,7 @@ class _HajjUmrahScreenState extends State<HajjUmrahScreen> with SingleTickerProv
           ),
           _PilgrimageDua(
             title: "রুকনে ইয়ামানি ও হাজরে আসওয়াদের মাঝের দোয়া",
-            arabic: "رَبَّنَا آتِنَا فِي الدُّنْইَا حَسَنَةً وَفِي الْآخِرَةِ حَسَنَةً وَقِنَا عَذَابَ النَّارِ",
+            arabic: "رَبَّنَا آتِنَا فِي الدُّنْيَا حَسَنَةً وَفِي الْآخِرَةِ حَسَنَةً وَقِنَا عَذَابَ النَّارِ",
             pronunciation: "রাব্বানা আতিনা ফিদ দুনয়া হাসানাতাও ওয়া ফিল আখিরাতি হাসানাতাও ওয়া কিনা আজাবান নার।",
             translation: "হে আমাদের রব! আপনি আমাদের দুনিয়াতে কল্যাণ দান করুন এবং আখিরাতেও কল্যাণ দান করুন এবং জাহান্নামের আগুন থেকে রক্ষা করুন। (সূরা বাকারা: ২০১)"
           ),
@@ -412,7 +721,7 @@ class _HajjUmrahScreenState extends State<HajjUmrahScreen> with SingleTickerProv
         id: "umrah_step_3",
         title: "সাফা ও মারওয়া পাহাড়ে সাঈ",
         subtitle: "ওমরাহর ওয়াজিব কাজ",
-        description: "সাফা পাহাড় থেকে শুরু করে মারওয়া পাহাড় পর্যন্ত মোট ৭ বার হেঁটে যাতায়াত করা। সাফা থেকে মারওয়া ১ বার এবং মারওয়া থেকে সাফা ২য় বার এভাবে হিসাব করা হয়।",
+        description: "সাফা পাহাড় থেকে শুরু করে মারওয়া পাহাড় পর্যন্ত মোট ৭ বার হেঁটে যাতায়াত করা। সাফা থেকে মারওয়া ১ বার এবং মারওয়া থেকে সাফা ২য় বার এভাবে হিসাব করা হয়।",
         actions: [
           "সাফা পাহাড়ে উঠে কিবলামুখী হয়ে দাঁড়ানো ও দোয়া করা",
           "মারওয়া পাহাড়ের উদ্দেশ্যে স্বাভাবিক গতিতে হাঁটা",
