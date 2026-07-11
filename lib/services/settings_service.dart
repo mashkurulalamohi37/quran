@@ -88,6 +88,7 @@ class SettingsService extends ChangeNotifier {
   static const _keyKhatamTargetDays = 'khatamTargetDays';
   static const _keyKhatamStartDate = 'khatamStartDate';
   static const _keyKhatamCompletedDays = 'khatamCompletedDaysData';
+  static const _keyBookmarkedDuas = 'bookmarkedDuas';
 
   // ── State ──
   bool _isDarkMode = false;
@@ -155,6 +156,7 @@ class SettingsService extends ChangeNotifier {
   int _khatamTargetDays = 30;
   String _khatamStartDate = '';
   Set<int> _khatamCompletedDays = {};
+  Set<String> _bookmarkedDuas = {};
 
   // ── Getters ──
   bool get isDarkMode => _isDarkMode;
@@ -197,6 +199,7 @@ class SettingsService extends ChangeNotifier {
 
   Set<String> get completedHajjSteps => _completedHajjSteps;
   Set<String> get completedUmrahSteps => _completedUmrahSteps;
+  Set<String> get bookmarkedDuas => _bookmarkedDuas;
 
   bool get isMusafir => _isMusafir;
 
@@ -268,6 +271,7 @@ class SettingsService extends ChangeNotifier {
 
     _completedHajjSteps = (prefs.getStringList(_keyCompletedHajjSteps) ?? []).toSet();
     _completedUmrahSteps = (prefs.getStringList(_keyCompletedUmrahSteps) ?? []).toSet();
+    _bookmarkedDuas = (prefs.getStringList(_keyBookmarkedDuas) ?? []).toSet();
 
     final ramadanRaw = prefs.getString(_keyRamadanDeeds) ?? '';
     if (ramadanRaw.isNotEmpty) {
@@ -943,6 +947,19 @@ class SettingsService extends ChangeNotifier {
     final prefs = await SharedPreferences.getInstance();
     final stringList = set.map((e) => e.toString()).toList();
     await prefs.setStringList(_keyKhatamCompletedDays, stringList);
+    notifyListeners();
+  }
+
+  Future<void> toggleDuaBookmark(String duaId) async {
+    final set = _bookmarkedDuas.toSet();
+    if (set.contains(duaId)) {
+      set.remove(duaId);
+    } else {
+      set.add(duaId);
+    }
+    _bookmarkedDuas = set;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setStringList(_keyBookmarkedDuas, set.toList());
     notifyListeners();
   }
 }
