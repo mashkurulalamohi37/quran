@@ -20,6 +20,7 @@ import 'package:quran/pages/prophets_screen.dart';
 import 'package:quran/pages/qaida_screen.dart';
 import 'package:quran/pages/quiz_screen.dart';
 import 'package:quran/pages/sunnah_screen.dart';
+import 'package:quran/pages/namaj_shikha.dart';
 import 'package:quran/services/settings_service.dart';
 import 'package:quran/theme/app_theme.dart';
 
@@ -138,6 +139,13 @@ class UtilitiesScreen extends StatelessWidget {
                   subtitle: "আমল ও অভ্যাস",
                   gradient: const [Color(0xFFD84315), Color(0xFFBF360C)],
                   onTap: () => _navigate(context, const SunnahScreen()),
+                ),
+                _UtilityTile(
+                  icon: Icons.menu_book_outlined,
+                  label: "নামাজ শিক্ষা",
+                  subtitle: "ওযু ও নামাজের নিয়ম",
+                  gradient: const [Color(0xFF1B5E20), Color(0xFF2E7D32)],
+                  onTap: () => _navigate(context, const NamajShikhaScreen()),
                 ),
               ],
             ),
