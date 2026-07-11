@@ -21,6 +21,7 @@ import 'package:quran/pages/qaida_screen.dart';
 import 'package:quran/pages/quiz_screen.dart';
 import 'package:quran/pages/sunnah_screen.dart';
 import 'package:quran/pages/namaj_shikha.dart';
+import 'package:quran/pages/ruqyah_screen.dart';
 import 'package:quran/services/settings_service.dart';
 import 'package:quran/theme/app_theme.dart';
 
@@ -146,6 +147,13 @@ class UtilitiesScreen extends StatelessWidget {
                   subtitle: "ওযু ও নামাজের নিয়ম",
                   gradient: const [Color(0xFF1B5E20), Color(0xFF2E7D32)],
                   onTap: () => _navigate(context, const NamajShikhaScreen()),
+                ),
+                _UtilityTile(
+                  icon: Icons.shield_outlined,
+                  label: "রুকিয়া শরইয়াহ",
+                  subtitle: "কুরআনি আরোগ্য",
+                  gradient: const [Color(0xFF00796B), Color(0xFF004D40)],
+                  onTap: () => _navigate(context, const RuqyahScreen()),
                 ),
               ],
             ),
