@@ -31,7 +31,7 @@ A feature-rich, high-performance Flutter mobile application that serves as a com
 - **Hijri Calendar:** Monthly Hijri date view with a compact dashboard widget.
 - **Khatam Planner:** Set goals and track daily reading quotas to finish reading the Quran in a target time.
 - **Ramadan Calendar:** Calculates local Sehri and Iftar times based on GPS location or selected district.
-- **Janazah, Ziyarat, Tasbih & Duas:** step-by-step funeral prayer guides, digital dhikr counter, and classified prayers.
+- **Namaj Shikha, Janazah, Ziyarat, Tasbih & Duas:** Step-by-step Wudu and Salat posture guide, funeral prayer guides, digital dhikr counter, and daily Masnun prayers.
 
 ---
 
