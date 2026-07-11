@@ -17,7 +17,7 @@ class _NamajShikhaScreenState extends State<NamajShikhaScreen> with SingleTicker
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 4, vsync: this);
+    _tabController = TabController(length: 5, vsync: this);
   }
 
   @override
@@ -47,6 +47,7 @@ class _NamajShikhaScreenState extends State<NamajShikhaScreen> with SingleTicker
             Tab(text: "নামাজের নিয়ম"),
             Tab(text: "সূরা ও দোয়া"),
             Tab(text: "নামাজের প্রকার"),
+            Tab(text: "রুকিয়া শরইয়াহ"),
           ],
         ),
       ),
@@ -57,6 +58,7 @@ class _NamajShikhaScreenState extends State<NamajShikhaScreen> with SingleTicker
           _buildStepsTab(isDark),
           _buildDuasTab(isDark),
           _buildTypesTab(isDark),
+          _buildRuqyahTab(isDark),
         ],
       ),
     );
@@ -181,6 +183,8 @@ class _NamajShikhaScreenState extends State<NamajShikhaScreen> with SingleTicker
       _PrayerType("মাগরিব", "৩ রাকাত ফরজ, ২ রাকাত সুন্নাত, ২ রাকাত নফল (ঐচ্ছিক)। মোট ৭ রাকাত।"),
       _PrayerType("এশা", "৪ রাকাত সুন্নাত (ঐচ্ছিক), ৪ রাকাত ফরজ, ২ রাকাত সুন্নাত, ২ রাকাত নফল, ৩ রাকাত বিতর (ওয়াজিব), ২ রাকাত নফল। মোট ১৭ রাকাত।"),
       _PrayerType("জুমা (শুক্রবার)", "৪ রাকাত কাবলাল জুমা সুন্নাত, ২ রাকাত ফরজ (খুতবার পর), ৪ রাকাত বা'দাল জুমা সুন্নাত, ২ রাকাত সুন্নাত।"),
+      _PrayerType("তাহাজ্জুদ নামাজ", "এশার নামাজের পর থেকে সুবহে সাদিকের পূর্ব পর্যন্ত পড়া যায়। সাধারণত ২ থেকে ১২ রাকাত পর্যন্ত পড়া যায় (২ রাকাত করে করে)। এটি একটি অত্যন্ত ফজিলতপূর্ণ নফল/সুন্নাত ইবাদত। দীর্ঘ কিরাআত ও দীর্ঘ রুকু-সিজদাহ করা উত্তম।"),
+      _PrayerType("নফল নামাজ", "যেকোনো নিষিদ্ধ সময় (যেমন: সূর্যোদয়, সূর্যাস্ত, দ্বিপ্রহর) ব্যতীত দিন বা রাতের যেকোনো সময়ে পড়া যায়। সাধারণ ২ রাকাত নামাজের মতোই নিয়ত করে পড়তে হয়।"),
     ];
 
     return ListView(
@@ -240,6 +244,104 @@ class _NamajShikhaScreenState extends State<NamajShikhaScreen> with SingleTicker
               const SizedBox(height: 4),
               Text(
                 "• দাঁড়িয়ে ইমাম প্রথমে সূরা ফাতিহা ও অন্য সূরা পাঠ করবেন।\n• রুকুতে যাওয়ার আগে ইমামের সাথে অতিরিক্ত ৩টি তাকবীর বলতে হবে এবং প্রতিবার হাত উঠিয়ে ছেড়ে দিতে হবে।\n• এরপর ৪র্থ তাকবীর বলে হাত না উঠিয়ে সরাসরি রুকুতে যেতে হবে এবং বাকি নামাজ সাধারণ নিয়মে শেষ করতে হবে।",
+                style: GoogleFonts.poppins(fontSize: 12, height: 1.5),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  // ── রুকিয়া শরইয়াহ ট্যাব ──
+  Widget _buildRuqyahTab(bool isDark) {
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: [
+        _buildSectionHeader("রুকিয়া শরইয়াহ (Ruqyah Shariah)", isDark),
+        const SizedBox(height: 8),
+        _buildFarzCard(
+          "রুকিয়া হলো কুরআন ও হাদিসের আয়াত এবং দোয়ার মাধ্যমে ঝাড়ফুঁক করা। এটি জাদুটোনা, কুফরি, বদনজর ও বিভিন্ন মানসিক-শারীরিক অসুস্থতা থেকে মুক্তির জন্য অত্যন্ত কার্যকরী একটি সুন্নাহ আমল।",
+          isDark,
+        ),
+        const SizedBox(height: 20),
+        _buildSectionHeader("রুকিয়া করার শর্তাবলী", isDark),
+        const SizedBox(height: 10),
+        _buildStepCard(
+          "১. পূর্ণ ঈমান ও আল্লাহর ওপর ভরসা",
+          "বিশ্বাস রাখতে হবে যে নিরাময় দানকারী একমাত্র আল্লাহ তাআলা। রুকিয়া কেবল একটি উসিলা মাত্র।",
+          isDark,
+        ),
+        _buildStepCard(
+          "২. শিরকমুক্ত হওয়া",
+          "রুকিয়ার আয়াত ও দোয়া ছাড়া অন্য কোনো কুফরি কথা, তাবিজ বা শিরকযুক্ত প্রতীক ব্যবহার করা যাবে না।",
+          isDark,
+        ),
+        _buildStepCard(
+          "৩. পবিত্রতা ও তওবা",
+          "আমল শুরুর আগে অযু করে শরীর ও পোশাক পবিত্র করে নেওয়া এবং গুনাহ থেকে ইস্তিগফার (তওবা) করা উত্তম।",
+          isDark,
+        ),
+        const SizedBox(height: 20),
+        _buildSectionHeader("সহজ রুকিয়া করার নিয়ম ও পড়ার আয়াতসমূহ", isDark),
+        const SizedBox(height: 10),
+        Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: isDark ? AppColors.cardDark : AppColors.cardLight,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: isDark ? Colors.white10 : Colors.black12),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                "পদ্ধতি:",
+                style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.emerald),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                "দুই হাতের তালু একত্রে করে নিচের সূরা/দোয়াগুলো পাঠ করে ফুঁ দিন এবং পুরো শরীরে হাত বুলিয়ে নিন। অথবা একটি পানির পাত্রে ফুঁ দিয়ে সেই পানি পান করুন ও গোসল করুন।",
+                style: GoogleFonts.poppins(fontSize: 12, height: 1.5),
+              ),
+              const Divider(height: 20),
+              Text(
+                "১. সূরা ফাতিহা (৭ বার):",
+                style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.gold),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                "সূরা ফাতিহা হলো শেফা বা নিরাময়ের সূরা। এটি ৭ বার পাঠ করবেন।",
+                style: GoogleFonts.poppins(fontSize: 12, height: 1.5, color: Colors.grey),
+              ),
+              const SizedBox(height: 10),
+              Text(
+                "২. আয়াতুল কুরসি (৩ বার):",
+                style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.gold),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                "দুষ্ট জীন ও শয়তানের আছর থেকে রক্ষা পাওয়ার জন্য ৩ বার পাঠ করুন।",
+                style: GoogleFonts.poppins(fontSize: 12, height: 1.5, color: Colors.grey),
+              ),
+              const SizedBox(height: 10),
+              Text(
+                "৩. সূরা ইখলাস, ফালাক ও নাস (৩ বার করে):",
+                style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.gold),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                "বদনজর ও জাদুটোনার প্রভাব কাটানোর জন্য এই শেষ তিনটি সূরা ৩ বার করে পাঠ করবেন।",
+                style: GoogleFonts.poppins(fontSize: 12, height: 1.5, color: Colors.grey),
+              ),
+              const SizedBox(height: 10),
+              Text(
+                "৪. হাদিসের বিশেষ শেফার দোয়া:",
+                style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.gold),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                "উচ্চারণ: 'আজহিবিল বাসা রাব্বান নাস, ওয়াশফি আনতাস শাফি, লা শিফাআ ইল্লা শিফাউকা, শিফাউল লা ইয়ুগাদিরু সাক্বামা।'\nঅর্থ: হে মানুষের প্রতিপালক! কষ্ট দূর করে দিন, আর আরোগ্য দান করুন। আপনিই আরোগ্যদানকারী, আপনার আরোগ্য ছাড়া কোনো নিরাময় নেই, এমন নিরাময় যা কোনো রোগ অবশিষ্ট রাখে না।",
                 style: GoogleFonts.poppins(fontSize: 12, height: 1.5),
               ),
             ],
