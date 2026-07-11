@@ -558,52 +558,52 @@ class _ContinueReadingCard extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         decoration: BoxDecoration(
           gradient: const LinearGradient(
             colors: [Color(0xFFF9A825), Color(0xFFF57F17)],
           ),
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: const Color(0xFFF9A825).withValues(alpha: 0.3),
-              blurRadius: 12,
-              offset: const Offset(0, 6),
+              color: const Color(0xFFF9A825).withValues(alpha: 0.25),
+              blurRadius: 8,
+              offset: const Offset(0, 4),
             ),
           ],
         ),
         child: Row(
           children: [
             Container(
-              padding: const EdgeInsets.all(12),
+              padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
                 color: const Color(0x33FFFFFF),
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(10),
               ),
-              child: const Icon(Icons.auto_stories_rounded, color: Colors.white, size: 28),
+              child: const Icon(Icons.auto_stories_rounded, color: Colors.white, size: 20),
             ),
-            const SizedBox(width: 14),
+            const SizedBox(width: 10),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     "শেষ পড়া",
-                    style: GoogleFonts.poppins(color: Colors.white70, fontSize: 12),
+                    style: GoogleFonts.poppins(color: Colors.white70, fontSize: 10),
                   ),
                   Text(
                     "সূরা ${settings.lastReadSurahBangla}",
-                    style: GoogleFonts.poppins(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w700),
+                    style: GoogleFonts.poppins(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w700),
                     overflow: TextOverflow.ellipsis,
                   ),
                   Text(
                     "আয়াত ${settings.lastReadAyahIndex}",
-                    style: GoogleFonts.poppins(color: Colors.white70, fontSize: 12),
+                    style: GoogleFonts.poppins(color: Colors.white70, fontSize: 10),
                   ),
                 ],
               ),
             ),
-            const Icon(Icons.arrow_forward_ios_rounded, color: Colors.white70, size: 16),
+            const Icon(Icons.arrow_forward_ios_rounded, color: Colors.white70, size: 14),
           ],
         ),
       ),
@@ -1088,6 +1088,30 @@ class _HomePrayerTimesCard extends StatelessWidget {
     );
   }
 
+  /// Returns the best location label to display (Bengali name)
+  String _getLocationLabel() {
+    if (settings.isAutomaticLocation &&
+        settings.cachedLatitude != null &&
+        settings.cachedLongitude != null) {
+      // Find nearest district from GPS
+      final lat = settings.cachedLatitude!;
+      final lng = settings.cachedLongitude!;
+      District? nearest;
+      double minDist = double.infinity;
+      for (final d in PrayerService.bdDistricts) {
+        final dlat = d.latitude - lat;
+        final dlng = d.longitude - lng;
+        final dist = dlat * dlat + dlng * dlng;
+        if (dist < minDist) {
+          minDist = dist;
+          nearest = d;
+        }
+      }
+      if (nearest != null) return nearest.nameBn;
+    }
+    return PrayerService.getDistrictByName(settings.selectedDistrict).nameBn;
+  }
+
   String _toBn(String input) {
     const english = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
     const bengali = ['০', '১', '২', '৩', '৪', '৫', '৬', '৭', '৮', '৯'];
@@ -1313,7 +1337,7 @@ class _HomePrayerTimesCard extends StatelessWidget {
                             const Icon(Icons.location_on_rounded, size: 14, color: AppColors.emerald),
                             const SizedBox(width: 4),
                             Text(
-                              PrayerService.getDistrictByName(settings.selectedDistrict).nameBn,
+                              _getLocationLabel(),
                               style: GoogleFonts.poppins(
                                 fontSize: 12,
                                 fontWeight: FontWeight.bold,
