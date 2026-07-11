@@ -205,6 +205,46 @@ class _NamajShikhaScreenState extends State<NamajShikhaScreen> with SingleTicker
             ],
           ),
         )),
+        const SizedBox(height: 20),
+        _buildSectionHeader("ঈদের নামাজ পড়ার নিয়ম", isDark),
+        const SizedBox(height: 10),
+        Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: isDark ? AppColors.cardDark : AppColors.cardLight,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: isDark ? Colors.white10 : Colors.black12),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                "ঈদের নামাজ ২ রাকাত এবং এতে অতিরিক্ত ৬টি ওয়াজিব তাকবীর রয়েছে। এটি জামাতে আদায় করা ওয়াজিব। কোনো আজান ও ইকামত নেই।",
+                style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w500),
+              ),
+              const Divider(height: 20),
+              Text(
+                "১ম রাকাত:",
+                style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.emerald),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                "• নিয়ত করে হাত বেঁধে সানা পড়তে হবে।\n• এরপর ইমামের সাথে অতিরিক্ত ৩টি ওয়াজিব তাকবীর বলতে হবে। ১ম ও ২য় তাকবীরে হাত কান পর্যন্ত উঠিয়ে ছেড়ে দিতে হবে এবং ৩য় তাকবীরে হাত উঠিয়ে বেঁধে নিতে হবে।\n• এরপর ইমাম সূরা ফাতিহা ও অন্য সূরা পড়বেন এবং নিয়ম অনুযায়ী রুকু-সিজদাহ করতে হবে।",
+                style: GoogleFonts.poppins(fontSize: 12, height: 1.5),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                "২য় রাকাত:",
+                style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.emerald),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                "• দাঁড়িয়ে ইমাম প্রথমে সূরা ফাতিহা ও অন্য সূরা পাঠ করবেন।\n• রুকুতে যাওয়ার আগে ইমামের সাথে অতিরিক্ত ৩টি তাকবীর বলতে হবে এবং প্রতিবার হাত উঠিয়ে ছেড়ে দিতে হবে।\n• এরপর ৪র্থ তাকবীর বলে হাত না উঠিয়ে সরাসরি রুকুতে যেতে হবে এবং বাকি নামাজ সাধারণ নিয়মে শেষ করতে হবে।",
+                style: GoogleFonts.poppins(fontSize: 12, height: 1.5),
+              ),
+            ],
+          ),
+        ),
       ],
     );
   }
