@@ -305,7 +305,7 @@ class HomeDashboardState extends State<HomeDashboard> {
             children: [
               // ── App Bar Row ──
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -314,7 +314,7 @@ class HomeDashboardState extends State<HomeDashboard> {
                       "বাংলা কুরআন",
                       style: GoogleFonts.poppins(
                         color: Colors.white,
-                        fontSize: 20,
+                        fontSize: 18,
                         fontWeight: FontWeight.w700,
                         letterSpacing: 0.5,
                       ),
@@ -337,31 +337,32 @@ class HomeDashboardState extends State<HomeDashboard> {
                 ),
               ),
 
-              // ── Bismillah header ──
+              // ── Bismillah + Subtitle combined compact row ──
               Padding(
-                padding: const EdgeInsets.symmetric(vertical: 4),
-                child: Text(
-                  "بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ",
-                  style: const TextStyle(
-                    fontFamily: 'Lateef',
-                    fontSize: 26,
-                    color: AppColors.goldLight,
-                    shadows: [Shadow(color: Colors.black38, blurRadius: 8)],
-                  ),
-                  textAlign: TextAlign.center,
+                padding: const EdgeInsets.only(bottom: 6),
+                child: Column(
+                  children: [
+                    Text(
+                      "بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ",
+                      style: const TextStyle(
+                        fontFamily: 'Lateef',
+                        fontSize: 20,
+                        color: AppColors.goldLight,
+                        shadows: [Shadow(color: Colors.black38, blurRadius: 8)],
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    Text(
+                      "পড়ুন, শিখুন, আমল করুন",
+                      style: GoogleFonts.poppins(
+                        color: Colors.white60,
+                        fontSize: 11,
+                        fontStyle: FontStyle.italic,
+                      ),
+                    ),
+                  ],
                 ),
               ),
-
-              // ── Subtitle ──
-              Text(
-                "পড়ুন, শিখুন, আমল করুন",
-                style: GoogleFonts.poppins(
-                  color: Colors.white60,
-                  fontSize: 13,
-                  fontStyle: FontStyle.italic,
-                ),
-              ),
-              const SizedBox(height: 8),
 
               // ── Main content card ──
               Expanded(
@@ -1312,7 +1313,7 @@ class _HomePrayerTimesCard extends StatelessWidget {
                             const Icon(Icons.location_on_rounded, size: 14, color: AppColors.emerald),
                             const SizedBox(width: 4),
                             Text(
-                              _toBn(settings.selectedDistrict),
+                              PrayerService.getDistrictByName(settings.selectedDistrict).nameBn,
                               style: GoogleFonts.poppins(
                                 fontSize: 12,
                                 fontWeight: FontWeight.bold,
