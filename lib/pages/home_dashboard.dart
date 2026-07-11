@@ -1102,6 +1102,52 @@ class _HomePrayerTimesCard extends StatelessWidget {
     return _toBn("$h:$m");
   }
 
+  String _getActivePrayerId(DailyPrayers p, DateTime now) {
+    if (now.isBefore(p.fajr.time)) return "isha";
+    if (now.isBefore(p.dhuhr.time)) return "fajr";
+    if (now.isBefore(p.asr.time)) return "dhuhr";
+    if (now.isBefore(p.maghrib.time)) return "asr";
+    if (now.isBefore(p.isha.time)) return "maghrib";
+    return "isha";
+  }
+
+  Widget _buildPrayerTimeColumn(String label, String timeStr, bool isActive, bool isDark) {
+    final activeColor = AppColors.emerald;
+    final inactiveTxt = isDark ? Colors.white70 : Colors.black87;
+    final inactiveSub = isDark ? Colors.white38 : Colors.black38;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+      decoration: BoxDecoration(
+        color: isActive ? AppColors.emerald.withValues(alpha: isDark ? 0.15 : 0.08) : Colors.transparent,
+        borderRadius: BorderRadius.circular(10),
+        border: isActive ? Border.all(color: AppColors.emerald.withValues(alpha: 0.3), width: 1) : null,
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            label,
+            style: GoogleFonts.poppins(
+              fontSize: 10.5,
+              fontWeight: isActive ? FontWeight.bold : FontWeight.w500,
+              color: isActive ? activeColor : inactiveTxt,
+            ),
+          ),
+          const SizedBox(height: 3),
+          Text(
+            timeStr,
+            style: GoogleFonts.poppins(
+              fontSize: 11,
+              fontWeight: isActive ? FontWeight.w800 : FontWeight.bold,
+              color: isActive ? activeColor : inactiveSub,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   _WaqtPhase _getWaqtPhase(DailyPrayers p, DateTime now) {
     final todayMidnight = DateTime(now.year, now.month, now.day, 0, 0);
     final tomorrowMidnight = todayMidnight.add(const Duration(days: 1));
@@ -1409,7 +1455,20 @@ class _HomePrayerTimesCard extends StatelessWidget {
                         ),
                       ],
                     ),
-                    const Divider(height: 24, thickness: 1),
+                    const Divider(height: 20, thickness: 1),
+
+                    // Row 4.5: Other Daily Prayer Times
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        _buildPrayerTimeColumn("ফজর", _fmtTimeBn(prayers.fajr.time), _getActivePrayerId(prayers, now) == "fajr", isDark),
+                        _buildPrayerTimeColumn("যোহর", _fmtTimeBn(prayers.dhuhr.time), _getActivePrayerId(prayers, now) == "dhuhr", isDark),
+                        _buildPrayerTimeColumn("আসর", _fmtTimeBn(prayers.asr.time), _getActivePrayerId(prayers, now) == "asr", isDark),
+                        _buildPrayerTimeColumn("মাগরিব", _fmtTimeBn(prayers.maghrib.time), _getActivePrayerId(prayers, now) == "maghrib", isDark),
+                        _buildPrayerTimeColumn("এশা", _fmtTimeBn(prayers.isha.time), _getActivePrayerId(prayers, now) == "isha", isDark),
+                      ],
+                    ),
+                    const Divider(height: 20, thickness: 1),
 
                     // Row 5: Sunrise & Sunset times in footer
                     Row(
