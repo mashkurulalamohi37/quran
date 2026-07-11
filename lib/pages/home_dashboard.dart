@@ -1213,207 +1213,238 @@ class _HomePrayerTimesCard extends StatelessWidget {
     final statusIconColor = isDayTime ? Colors.orangeAccent : Colors.amber;
 
     final txtColor = isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight;
+    final subColor = isDark ? Colors.white60 : Colors.black54;
 
     return InkWell(
       onTap: () => Navigator.push(
           context, MaterialPageRoute(builder: (_) => const PrayerTimesScreen())),
-      borderRadius: BorderRadius.circular(20),
-      child: Card(
-        color: isDark ? AppColors.cardDark : Colors.white,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-          side: BorderSide(
-            color: isDark ? Colors.white10 : Colors.black.withValues(alpha: 0.05),
-            width: 1,
+      borderRadius: BorderRadius.circular(24),
+      child: Container(
+        decoration: BoxDecoration(
+          color: isDark ? const Color(0xFF0F172A) : Colors.white,
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(
+            color: isDark ? Colors.white.withValues(alpha: 0.08) : Colors.black.withValues(alpha: 0.05),
+            width: 1.5,
           ),
+          boxShadow: [
+            BoxShadow(
+              color: isDark ? Colors.black.withValues(alpha: 0.4) : Colors.black.withValues(alpha: 0.03),
+              blurRadius: 16,
+              offset: const Offset(0, 8),
+            ),
+          ],
         ),
-        elevation: 0,
-        child: Container(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(20),
-            gradient: isDark
-                ? const LinearGradient(
-                    colors: [Color(0xFF1E293B), Color(0xFF0F172A)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  )
-                : const LinearGradient(
-                    colors: [Color(0xFFF8FAFC), Color(0xFFF1F5F9)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-          ),
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(24),
+          child: Stack(
             children: [
-              // 1. Top row: [Tahajjud end + check] | [Divider + current time + sun/moon icon] | [Fajr time]
-              Row(
-                children: [
-                  Expanded(
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          "${phase.activeLabel.split(' ')[0]} শেষ ${phase.activeTimeStr} মি.",
-                          style: GoogleFonts.poppins(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w600,
-                            color: isDark ? Colors.white70 : Colors.black87,
-                          ),
-                        ),
-                        const SizedBox(width: 4),
-                        const Icon(
-                          Icons.check_circle_rounded,
-                          color: AppColors.emerald,
-                          size: 13,
-                        ),
-                      ],
-                    ),
+              // Top-right subtle glow decoration
+              Positioned(
+                top: -40,
+                right: -40,
+                child: Container(
+                  width: 120,
+                  height: 120,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: AppColors.emerald.withValues(alpha: isDark ? 0.08 : 0.04),
                   ),
-                  Container(
-                    height: 24,
-                    width: 1,
-                    color: isDark ? Colors.white24 : Colors.black12,
-                  ),
-                  const SizedBox(width: 8),
-                  Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(statusIcon, size: 10, color: statusIconColor),
-                      const SizedBox(width: 2),
-                      Text(
-                        _fmtTimeBn(now),
-                        style: GoogleFonts.poppins(
-                          fontSize: 9,
-                          fontWeight: FontWeight.w700,
-                          color: isDark ? Colors.white60 : Colors.black54,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(width: 8),
-                  Container(
-                    height: 24,
-                    width: 1,
-                    color: isDark ? Colors.white24 : Colors.black12,
-                  ),
-                  Expanded(
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          "${phase.nextLabel} ${phase.nextTimeStr} মি.",
-                          style: GoogleFonts.poppins(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w600,
-                            color: isDark ? Colors.white70 : Colors.black87,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-
-              // 2. Middle Row: [Sunrise Icon + Time] -------- [Sunset Icon + Time]
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Row(
-                    children: [
-                      const Icon(Icons.wb_twilight_rounded, size: 14, color: Colors.orangeAccent),
-                      const SizedBox(width: 4),
-                      Text(
-                        _fmtTimeBn(prayers.sunrise.time),
-                        style: GoogleFonts.poppins(
-                          fontSize: 11,
-                          color: isDark ? Colors.white60 : Colors.black54,
-                        ),
-                      ),
-                    ],
-                  ),
-                  Row(
-                    children: [
-                      const Icon(Icons.wb_sunny_outlined, size: 14, color: Colors.redAccent),
-                      const SizedBox(width: 4),
-                      Text(
-                        _fmtTimeBn(prayers.maghrib.time),
-                        style: GoogleFonts.poppins(
-                          fontSize: 11,
-                          color: isDark ? Colors.white60 : Colors.black54,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-
-              // 3. Main Label Row: [Tahajjud End] ------- [03:46]
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    phase.activeLabel,
-                    style: GoogleFonts.poppins(
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                      color: txtColor,
-                    ),
-                  ),
-                  Text(
-                    phase.activeTimeStr,
-                    style: GoogleFonts.poppins(
-                      fontSize: 15,
-                      fontWeight: FontWeight.bold,
-                      color: txtColor,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-
-              // 4. Progress Bar
-              ClipRRect(
-                borderRadius: BorderRadius.circular(4),
-                child: LinearProgressIndicator(
-                  value: progress,
-                  minHeight: 6,
-                  backgroundColor: isDark ? Colors.white10 : Colors.black.withValues(alpha: 0.05),
-                  valueColor: const AlwaysStoppedAnimation<Color>(AppColors.emerald),
                 ),
               ),
-              const SizedBox(height: 10),
-
-              // 5. Status Row: [• Ongoing] -------- [3 hours 17 minutes left]
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Row(
-                    children: [
-                      const Icon(Icons.circle_rounded, color: AppColors.emerald, size: 8),
-                      const SizedBox(width: 4),
-                      Text(
-                        "চলমান",
-                        style: GoogleFonts.poppins(
-                          fontSize: 11.5,
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.emerald,
+              Padding(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Row 1: Location & Live Clock
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Row(
+                          children: [
+                            const Icon(Icons.location_on_rounded, size: 14, color: AppColors.emerald),
+                            const SizedBox(width: 4),
+                            Text(
+                              _toBn(settings.selectedDistrict),
+                              style: GoogleFonts.poppins(
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                                color: subColor,
+                              ),
+                            ),
+                          ],
                         ),
-                      ),
-                    ],
-                  ),
-                  Text(
-                    remainingStr,
-                    style: GoogleFonts.poppins(
-                      fontSize: 11.5,
-                      fontWeight: FontWeight.bold,
-                      color: isDark ? Colors.white60 : Colors.black54,
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.05),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(statusIcon, size: 12, color: statusIconColor),
+                              const SizedBox(width: 4),
+                              Text(
+                                _fmtTimeBn(now),
+                                style: GoogleFonts.poppins(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.bold,
+                                  color: txtColor,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
                     ),
-                  ),
-                ],
+                    const SizedBox(height: 18),
+
+                    // Row 2: Next Prayer grand layout
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              "পরবর্তী ওয়াক্ত",
+                              style: GoogleFonts.poppins(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w500,
+                                color: subColor,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              phase.nextLabel,
+                              style: GoogleFonts.poppins(
+                                fontSize: 24,
+                                fontWeight: FontWeight.w900,
+                                color: AppColors.emerald,
+                                letterSpacing: 0.5,
+                              ),
+                            ),
+                          ],
+                        ),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            Text(
+                              "শুরু হবে",
+                              style: GoogleFonts.poppins(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w500,
+                                color: subColor,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              "${phase.nextTimeStr} মিনিটে",
+                              style: GoogleFonts.poppins(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: txtColor,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Row 3: Progress Bar
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(4),
+                      child: LinearProgressIndicator(
+                        value: progress,
+                        minHeight: 5,
+                        backgroundColor: isDark ? Colors.white10 : Colors.black.withValues(alpha: 0.05),
+                        valueColor: const AlwaysStoppedAnimation<Color>(AppColors.emerald),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+
+                    // Row 4: Status (Ongoing Waqt & Countdown)
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Row(
+                          children: [
+                            Container(
+                              width: 8,
+                              height: 8,
+                              decoration: const BoxDecoration(
+                                color: AppColors.emerald,
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                            const SizedBox(width: 6),
+                            Text(
+                              "চলমান: ${phase.activeLabel.split(' ')[0]}",
+                              style: GoogleFonts.poppins(
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                                color: txtColor,
+                              ),
+                            ),
+                          ],
+                        ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: AppColors.emerald.withValues(alpha: 0.08),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Text(
+                            remainingStr,
+                            style: GoogleFonts.poppins(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.emerald,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const Divider(height: 24, thickness: 1),
+
+                    // Row 5: Sunrise & Sunset times in footer
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Row(
+                          children: [
+                            const Icon(Icons.wb_twilight_rounded, size: 14, color: Colors.orangeAccent),
+                            const SizedBox(width: 4),
+                            Text(
+                              "সূর্যোদয়: ${_fmtTimeBn(prayers.sunrise.time)}",
+                              style: GoogleFonts.poppins(
+                                fontSize: 11,
+                                color: subColor,
+                              ),
+                            ),
+                          ],
+                        ),
+                        Row(
+                          children: [
+                            const Icon(Icons.wb_sunny_outlined, size: 14, color: Colors.redAccent),
+                            const SizedBox(width: 4),
+                            Text(
+                              "সূর্যাস্ত: ${_fmtTimeBn(prayers.maghrib.time)}",
+                              style: GoogleFonts.poppins(
+                                fontSize: 11,
+                                color: subColor,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
             ],
           ),
