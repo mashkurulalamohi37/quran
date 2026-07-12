@@ -1,4 +1,4 @@
-package com.banglaquran.quran;
+package com.afnanquran.app;
 
 import android.app.PendingIntent;
 import android.content.Context;

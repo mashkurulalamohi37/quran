@@ -1,4 +1,4 @@
-package com.banglaquran.quran;
+package com.afnanquran.app;
 
 import android.app.NotificationManager;
 import android.content.Context;
@@ -12,7 +12,7 @@ import io.flutter.embedding.engine.FlutterEngine;
 import io.flutter.plugin.common.MethodChannel;
 
 public class MainActivity extends FlutterActivity {
-    private static final String CHANNEL = "com.banglaquran.quran/sound_mode";
+    private static final String CHANNEL = "com.afnanquran.app/sound_mode";
 
     @Override
     public void configureFlutterEngine(@NonNull FlutterEngine flutterEngine) {

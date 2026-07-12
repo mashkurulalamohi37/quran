@@ -102,13 +102,13 @@ class HomeDashboardState extends State<HomeDashboard> {
       if (await _inAppReview.isAvailable()) {
         await _inAppReview.requestReview();
       } else {
-        final url = Uri.parse("https://play.google.com/store/apps/details?id=com.banglaquran.quran");
+        final url = Uri.parse("https://play.google.com/store/apps/details?id=com.afnanquran.app");
         if (await canLaunchUrl(url)) {
           await launchUrl(url, mode: LaunchMode.externalApplication);
         }
       }
     } catch (_) {
-      final url = Uri.parse("https://play.google.com/store/apps/details?id=com.banglaquran.quran");
+      final url = Uri.parse("https://play.google.com/store/apps/details?id=com.afnanquran.app");
       if (await canLaunchUrl(url)) {
         await launchUrl(url, mode: LaunchMode.externalApplication);
       }

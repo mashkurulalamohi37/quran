@@ -5,7 +5,7 @@ import 'package:quran/services/prayer_service.dart';
 import 'package:quran/services/settings_service.dart';
 
 class SoundService {
-  static const MethodChannel _channel = MethodChannel('com.banglaquran.quran/sound_mode');
+  static const MethodChannel _channel = MethodChannel('com.afnanquran.app/sound_mode');
 
   Timer? _autoTimer;
   bool _isMutedByApp = false;

@@ -48,7 +48,7 @@
             android:exported="false"/>
 
         <!-- Prayer Widget Receiver -->
-        <receiver android:name="com.banglaquran.quran.PrayerWidgetProvider" android:exported="true">
+        <receiver android:name="com.afnanquran.app.PrayerWidgetProvider" android:exported="true">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
             </intent-filter>
