@@ -44,7 +44,7 @@ dependencies:
   bangla_pdf: ^1.0.6
 
 flutter_launcher_icons:
-  image_path: "assets/images/qlauncher.png"
+  image_path: "assets/images/qlauncher.jpg"
   android: true
   ios: true
   min_sdk_android: 21
@@ -74,7 +74,7 @@ flutter:
     - assets/images/makka.png
     - assets/images/madina.png
     - assets/images/bgImg.png
-    - assets/images/qlauncher.png
+    - assets/images/qlauncher.jpg
     - assets/sura_list.json
     - assets/40hadis/40.json
     - assets/quran/1.json

@@ -58,7 +58,7 @@ class BanglaQuranApp extends StatelessWidget {
     return Consumer<SettingsService>(
       builder: (context, settings, _) {
         return MaterialApp(
-          title: 'বাংলা কুরআন',
+          title: 'Afnan Quran — أفنان القرآن',
           debugShowCheckedModeBanner: false,
           theme: AppTheme.light,
           darkTheme: AppTheme.dark,

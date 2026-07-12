@@ -6,6 +6,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:in_app_review/in_app_review.dart';
 import 'package:quran/pages/ayalistbysura.dart';
 import 'package:quran/pages/prayer_times.dart';
+import 'package:quran/pages/friday_khutbah_screen.dart';
 import 'package:quran/services/settings_service.dart';
 import 'package:quran/services/bookmark_service.dart';
 import 'package:quran/services/sound_service.dart';
@@ -311,7 +312,7 @@ class HomeDashboardState extends State<HomeDashboard> {
                   children: [
                     const Icon(Icons.wb_sunny_outlined, color: Colors.transparent), // spacer
                     Text(
-                      "বাংলা কুরআন",
+                      "Afnan Quran",
                       style: GoogleFonts.poppins(
                         color: Colors.white,
                         fontSize: 18,
@@ -402,6 +403,12 @@ class HomeDashboardState extends State<HomeDashboard> {
                             },
                           ),
                           const SizedBox(height: 20),
+                        ],
+
+                        // Friday Khutbah Card
+                        if (DateTime.now().weekday == DateTime.friday) ...[
+                          _HomeFridayKhutbahCard(isDark: isDark),
+                          const SizedBox(height: 16),
                         ],
 
                         // Quick statistics summary card
@@ -619,7 +626,7 @@ class _QuickStatsCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
         color: isDark ? AppColors.cardDark : AppColors.cardLight,
         borderRadius: BorderRadius.circular(20),
@@ -640,14 +647,14 @@ class _QuickStatsCard extends StatelessWidget {
             value: "${settings.streak} দিন",
             label: "ধারাবাহিকতা",
           ),
-          Container(width: 1, height: 40, color: isDark ? Colors.white10 : Colors.black12),
+          Container(width: 1, height: 26, color: isDark ? Colors.white10 : Colors.black12),
           _StatIndicator(
             icon: Icons.menu_book_rounded,
             color: AppColors.emerald,
             value: "${settings.surahsStartedCount} টি",
             label: "শুরু করা সূরা",
           ),
-          Container(width: 1, height: 40, color: isDark ? Colors.white10 : Colors.black12),
+          Container(width: 1, height: 26, color: isDark ? Colors.white10 : Colors.black12),
           _StatIndicator(
             icon: Icons.check_circle_outline_rounded,
             color: Colors.blue,
@@ -677,20 +684,20 @@ class _StatIndicator extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        Icon(icon, color: color, size: 24),
-        const SizedBox(height: 6),
+        Icon(icon, color: color, size: 18),
+        const SizedBox(height: 3),
         Text(
           value,
           style: GoogleFonts.poppins(
             fontWeight: FontWeight.w700,
-            fontSize: 14,
+            fontSize: 12.5,
           ),
         ),
-        const SizedBox(height: 2),
+        const SizedBox(height: 1),
         Text(
           label,
           style: GoogleFonts.poppins(
-            fontSize: 11,
+            fontSize: 10,
             color: Colors.grey,
           ),
         ),
@@ -1537,3 +1544,116 @@ class _HomePrayerTimesCard extends StatelessWidget {
     );
   }
 }
+
+class _HomeFridayKhutbahCard extends StatelessWidget {
+  final bool isDark;
+  const _HomeFridayKhutbahCard({required this.isDark});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(20),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: isDark
+              ? [const Color(0xFF0F3819), const Color(0xFF061A0C)]
+              : [const Color(0xFF1B5E20), const Color(0xFF2E7D32)],
+        ),
+        border: Border.all(
+          color: AppColors.gold.withValues(alpha: 0.4),
+          width: 1.5,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.emerald.withValues(alpha: 0.15),
+            blurRadius: 8,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: InkWell(
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const FridayKhutbahScreen()),
+          );
+        },
+        borderRadius: BorderRadius.circular(20),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: const BoxDecoration(
+                  color: Colors.white12,
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.headset_mic_rounded,
+                  color: AppColors.goldLight,
+                  size: 24,
+                ),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Row(
+                      children: [
+                        Text(
+                          "পবিত্র জুমাবার 🕌",
+                          style: GoogleFonts.poppins(
+                            color: AppColors.goldLight,
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: Colors.redAccent.withValues(alpha: 0.2),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: Colors.redAccent.withValues(alpha: 0.4), width: 0.5),
+                          ),
+                          child: Text(
+                            "খুতবা শুনুন",
+                            style: GoogleFonts.poppins(
+                              color: Colors.redAccent,
+                              fontSize: 9,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      "আজকের দিনের ফজিলতপূর্ণ আমল ও খুতবা শুনুন",
+                      style: GoogleFonts.poppins(
+                        color: Colors.white70,
+                        fontSize: 11.5,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const Icon(
+                Icons.arrow_forward_ios_rounded,
+                color: Colors.white70,
+                size: 14,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+

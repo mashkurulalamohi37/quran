@@ -22,6 +22,7 @@ import 'package:quran/pages/quiz_screen.dart';
 import 'package:quran/pages/sunnah_screen.dart';
 import 'package:quran/pages/namaj_shikha.dart';
 import 'package:quran/pages/ruqyah_screen.dart';
+import 'package:quran/pages/friday_khutbah_screen.dart';
 import 'package:quran/services/settings_service.dart';
 import 'package:quran/theme/app_theme.dart';
 
@@ -97,6 +98,14 @@ class UtilitiesScreen extends StatelessWidget {
                 iconColor: const Color(0xFF00796B),
                 bgTint: const Color(0xFF00796B),
                 onTap: () => _navigate(context, const RuqyahScreen()),
+              ),
+              _CompactUtilityTile(
+                icon: Icons.headset_mic_rounded,
+                label: "জুমার খুতবা",
+                subtitle: "গুরুত্বপূর্ণ বয়ান ও আলোচনা",
+                iconColor: const Color(0xFF2E7D32),
+                bgTint: const Color(0xFF2E7D32),
+                onTap: () => _navigate(context, const FridayKhutbahScreen()),
               ),
             ]),
             const SizedBox(height: 24),
